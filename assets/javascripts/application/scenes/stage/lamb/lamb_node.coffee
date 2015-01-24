@@ -3,28 +3,79 @@ class App.Scenes.Stage.LambNode extends App.Node
   speaking: false
   walking: false
   moving: false
-  initialize: ->
+  direction: 'right'
+  initialize: (options) ->
     @setAnchorPoint 0.5, 0
     @setContentSize 540, 396
+
+
+
     @_render_body()
     @_render_face()
     @_render_legs()
 
+
   events:
+    'enter': 'start_walking'
     'touchstart': 'smile_and_move'
+
+  start_walking: ->
+    @_set_direction @options.direction
+    @move_around 0, @parent.size.width
+
 
   smile_and_move:  ->
     @speak()
+
+
+  move: (distance) ->
+    @stopAction @moving if @moving
+
+    seconds = distance/@speed_per_sec
+    stand = new cc.CallFunc => @stand()
+
+    @moving = cc.sequence cc.moveBy(seconds, cc.p(distance, 0)), stand
+    @runAction @moving
+
+  move_around: (from, to) ->
+    return false if @moving
+
+    position = @getPosition()
+
+    from = @minimum if from < @minimum
+    to   = @maximum if to > @maximum
+    distance = to - from
+    seconds  = distance/@speed_per_sec
+
+    around_animation  = cc.sequence @_turn_to_left(),
+                                    cc.moveTo(seconds, cc.p(from, position.y)),
+                                    @_turn_to_right(),
+                                    cc.moveTo(seconds, cc.p(to, position.y))
+
+    after_init_animation = new cc.CallFunc =>
+      @runAction new cc.RepeatForever around_animation
+
+
+    switch @direction
+      when 'right'
+        to_distance     = to - position.x
+        init_animation  = cc.sequence cc.moveTo(to_distance/@speed_per_sec, cc.p(to, position.y)),
+                                      after_init_animation
+
+      when 'left'
+        from_distance   = position.x - from
+        init_animation  = cc.sequence cc.moveTo(from_distance/@speed_per_sec, cc.p(from, position.y)),
+                                      @_turn_to_right(),
+                                      cc.moveTo((to-from)/@speed_per_sec, cc.p(to, position.y)),
+                                      after_init_animation
+
+
+    @runAction init_animation
     @walk()
-    @move 400
+    @moving = true
 
 
-  move: (x) ->
-    unless @moving
-      @moving = true
-      x = x/@getScale()
-      seconds = x/@speed_per_sec
-      @runAction cc.sequence(cc.moveBy(seconds, cc.p(x, 0)))
+
 
 
   walk: ->
@@ -38,6 +89,8 @@ class App.Scenes.Stage.LambNode extends App.Node
       @legs[3].runAction right_animation.clone()
 
   stand: ->
+    @moving = false
+    @walking = false
     _(@legs).each (leg) =>
       leg.stopAllActions()
       leg.runAction cc.sequence cc.rotateTo(0.6, 90)
@@ -86,3 +139,15 @@ class App.Scenes.Stage.LambNode extends App.Node
     @face.attr x: 400, y: 250
 
     @addChild @face, 11
+
+
+  _set_direction: (direction) ->
+    scale_x   = @getScaleX()
+    direction = _(['left', 'right']).sample() unless direction
+    current_direction = if @getScaleX() > 0 then 'right' else 'left'
+
+    @setScaleX scale_x*-1 unless current_direction is direction
+    @direction = direction
+
+  _turn_to_right: -> new cc.CallFunc => @_set_direction 'right'
+  _turn_to_left:  -> new cc.CallFunc => @_set_direction 'left'

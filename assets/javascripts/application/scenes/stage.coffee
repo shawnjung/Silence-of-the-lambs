@@ -11,13 +11,16 @@ class App.Scenes.StageScene extends cc.Scene
   _render_lambs: ->
     @lambs = []
     _(_.range(0, 15)).each =>
+      x = parseInt Math.random() * @size.width
+      y = parseInt Math.random() * @size.height
+
       lamb = new App.Scenes.Stage.LambNode
-      x = parseInt(Math.random() * @size.width)
-      y = parseInt(Math.random() * @size.height)
-      lamb.attr x: x, y: y-30
-      lamb.setScale 0.5-(y/@size.height*0.4)
+        parent: this
+        scale: 0.5-(y/@size.height*0.4), x: x, y: y-30
+
       @lambs.push lamb
       @addChild lamb, 640+(y*-1)
+
     window.lambs = @lambs
 
   _render_background: ->

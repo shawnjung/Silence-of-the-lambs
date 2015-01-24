@@ -1,7 +1,10 @@
 class App.Node extends cc.Node
-  constructor: ->
+  constructor: (options)->
     super
-    @initialize()
+    @options = options or {}
+
+
+    @initialize options
     #@_startEventListener()
 
   initialize: ->
@@ -35,3 +38,25 @@ class App.Node extends cc.Node
 
   onTouchEnded: ->
     @[@events.touchend].apply this, arguments if @[@events.touchend] instanceof Function
+
+  _set_scale: ->
+    @setScale @options.scale
+
+  _set_position: ->
+    size       = @getContentSize()
+    half_width = size.width * Math.abs(@getScaleX()) / 2
+
+    @minimum = half_width
+    @maximum = @parent.size.width - half_width
+
+    @options.x = @maximum if @options.x > @maximum
+    @options.x = @minimum if @options.x < @minimum
+
+    @setPosition @options.x, @options.y
+
+  onEnter: ->
+    @_set_scale() if @options.scale
+    @_set_position() if @options.x and @options.y
+    super
+    @[@events.enter].apply this, arguments if @[@events.enter] instanceof Function
+
