@@ -11,6 +11,7 @@
     "modules" : ["cocos2d"],
 
     "jsList" : [
+        "assets/underscore.js",
         "assets/resources.js",
         "assets/application.js"
     ]

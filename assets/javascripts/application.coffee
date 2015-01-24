@@ -3,5 +3,9 @@
 
 # namespace
 window.App =
-  Scenes: {}
+  Scenes:
+    Stage:
+      Background: {}
+      #Layers: {}
+
   Layers: {}
