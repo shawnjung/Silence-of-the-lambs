@@ -13,7 +13,7 @@ class App.Scenes.StageScene extends cc.Scene
     _(_.range(0, @lambs_count)).each =>
       lamb = new App.Scenes.Stage.LambNode
       lamb.attr x: @size.width/2, y: @size.height/2
-
+      lamb.setScale 0.5
       @lambs.push lamb
       @addChild lamb
     window.lambs = @lambs
