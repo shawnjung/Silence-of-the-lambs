@@ -1,8 +1,8 @@
-class App.Node extends cc.Node
+class App.NodeController extends cc.Node
   constructor: (options)->
     super
+    @setAnchorPoint 0.5, 0
     @options = options or {}
-
 
     @initialize options
     #@_startEventListener()
@@ -40,11 +40,16 @@ class App.Node extends cc.Node
     @[@events.touchend].apply this, arguments if @[@events.touchend] instanceof Function
 
   _set_scale: ->
-    @setScale @options.scale
+    @speed_per_sec = @speed_per_sec*@options.scale
+    @main_node.setScale @options.scale
+    width  = parseInt @main_node.getContentSize().width*@options.scale
+    height = parseInt @main_node.getContentSize().height*@options.scale
+    @setContentSize width, height
+    @main_node.setPosition width/2, 0
 
   _set_position: ->
     size       = @getContentSize()
-    half_width = size.width * Math.abs(@getScaleX()) / 2
+    half_width = size.width / 2
 
     @minimum = half_width
     @maximum = @parent.size.width - half_width
@@ -56,7 +61,7 @@ class App.Node extends cc.Node
 
   onEnter: ->
     @_set_scale() if @options.scale
-    @_set_position() if @options.x and @options.y
+    @_set_position() if @options.x isnt undefined and @options.y isnt undefined
     super
     @[@events.enter].apply this, arguments if @[@events.enter] instanceof Function
 

@@ -1,5 +1,6 @@
 class App.Scenes.StageScene extends cc.Scene
-  lambs_count: 1
+  lambs_count: 10
+  y_lines: [0, 100, 190, 270, 340, 400, 450, 490, 530, 560]
   onEnter: ->
     super
     @size = cc.winSize
@@ -10,13 +11,12 @@ class App.Scenes.StageScene extends cc.Scene
 
   _render_lambs: ->
     @lambs = []
-    _(_.range(0, 15)).each =>
+    _(_.range(0, @lambs_count)).each =>
       x = parseInt Math.random() * @size.width
-      y = parseInt Math.random() * @size.height
+      y = _(@y_lines).sample()
 
-      lamb = new App.Scenes.Stage.LambNode
-        parent: this
-        scale: 0.5-(y/@size.height*0.4), x: x, y: y-30
+      lamb = new App.Scenes.Stage.LambController
+        scale: 0.5-(y/@size.height*0.45), x: x, y: y
 
       @lambs.push lamb
       @addChild lamb, 640+(y*-1)
