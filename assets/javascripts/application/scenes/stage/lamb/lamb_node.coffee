@@ -1,4 +1,8 @@
-class App.Scenes.Stage.LambNode extends cc.TouchableNode
+class App.Scenes.Stage.LambNode extends App.Node
+  speed_per_sec: 50
+  speaking: false
+  walking: false
+  moving: false
   initialize: ->
     @setAnchorPoint 0.5, 0
     @setContentSize 540, 396
@@ -7,21 +11,31 @@ class App.Scenes.Stage.LambNode extends cc.TouchableNode
     @_render_legs()
 
   events:
-    'touchstart': 'move'
+    'touchstart': 'smile_and_move'
 
-  move:  ->
-    x = 400
+  smile_and_move:  ->
+    @speak()
     @walk()
-    @runAction cc.sequence(cc.moveBy(5, cc.p(x/@getScale(), 0)))
+    @move 400
+
+
+  move: (x) ->
+    unless @moving
+      @moving = true
+      x = x/@getScale()
+      seconds = x/@speed_per_sec
+      @runAction cc.sequence(cc.moveBy(seconds, cc.p(x, 0)))
 
 
   walk: ->
-    left_animation = new cc.RepeatForever cc.sequence(cc.rotateTo(0.6, 70), cc.rotateTo(0.6, 110))
-    right_animation = new cc.RepeatForever cc.sequence(cc.rotateTo(0.6, 110), cc.rotateTo(0.6, 70))
-    @legs[0].runAction left_animation.clone()
-    @legs[1].runAction right_animation.clone()
-    @legs[2].runAction left_animation.clone()
-    @legs[3].runAction right_animation.clone()
+    unless @walking
+      @walking = true
+      left_animation = new cc.RepeatForever cc.sequence(cc.rotateTo(0.6, 70), cc.rotateTo(0.6, 110))
+      right_animation = new cc.RepeatForever cc.sequence(cc.rotateTo(0.6, 110), cc.rotateTo(0.6, 70))
+      @legs[0].runAction left_animation.clone()
+      @legs[1].runAction right_animation.clone()
+      @legs[2].runAction left_animation.clone()
+      @legs[3].runAction right_animation.clone()
 
   stand: ->
     _(@legs).each (leg) =>
@@ -29,7 +43,9 @@ class App.Scenes.Stage.LambNode extends cc.TouchableNode
       leg.runAction cc.sequence cc.rotateTo(0.6, 90)
 
   speak: ->
-    @face.setTextureRect new cc.Rect 891, 200, 99, 74
+    unless @speaking
+      @speaking = true
+      @face.setTextureRect new cc.Rect 891, 200, 99, 74
 
 
   _create_sprite: (x1, y1, x2, y2) ->
