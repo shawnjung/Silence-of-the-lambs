@@ -1,5 +1,5 @@
 class App.Scenes.LandingScene extends cc.Scene
-  animation_speed: 0.01
+  animation_speed: 1
   onEnter: ->
     super
     @size = cc.winSize

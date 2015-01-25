@@ -11,14 +11,6 @@ class App.Scenes.Stage.BaseScene extends cc.Scene
     @lambs = []
     @touchables = []
 
-  onEnter: ->
-    super
-    cc.audioEngine.playMusic(res.audio.background, true);
-
-  onExit: ->
-    super
-    cc.audioEngine.stopMusic()
-
 
   zoom_lamb: (lamb, callback) ->
     window.last_lamb = lamb

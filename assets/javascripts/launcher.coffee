@@ -6,6 +6,7 @@ cc.game.onStart = ->
 
   # load resources
   cc.LoaderScene.preload resource_urls, ->
+    cc.audioEngine.playMusic(res.audio.background, true);
     cc.director.runScene new App.Scenes.LandingScene # new App.Scenes.ScoreStageScene # new App.Scenes.LandingScene
 
 cc.game.run()
