@@ -45,8 +45,8 @@ class App.Scenes.Stage.LambController extends App.NodeController
       end_time   = new Date().getTime()
       spent_time = parseInt((end_time - @_start_time)/1000*100)/100
 
-      total_score = @patience*2
-      spent_score = (@patience - spent_time)*2
+      total_score = @patience*1.6
+      spent_score = (@patience - spent_time)*1.6
 
       score = parseInt total_score - spent_score
 

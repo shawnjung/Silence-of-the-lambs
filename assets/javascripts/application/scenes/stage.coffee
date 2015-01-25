@@ -10,13 +10,12 @@ class App.Scenes.StageScene extends cc.Scene
 
     @setAnchorPoint 0.5, 0.5
     @setPosition 0, 0
-    @_render_background()
-    @_render_lambs()
-    @_render_labels()
 
-    @_startEventListener()
+    @_render_game_elements()
+    @_render_game_overlays()
 
-    @on 'time-over', (lamb) =>
+    @elements.on 'time-over', (lamb) =>
+      lamb.speak()
       @stop_all_lambs()
       @zoom_lamb lamb, =>
         lamb.speak()
@@ -25,20 +24,41 @@ class App.Scenes.StageScene extends cc.Scene
       @current_score += score
       @labels.score_label.update @current_score
 
+    @_startEventListener()
+
 
   zoom_lamb: (lamb, callback) ->
+    window.last_lamb = lamb
     lamb_position = lamb.getPosition()
     lamb_size     = lamb.getContentSize()
-    a_x = (lamb_position.x+lamb_size.width/2)/@size.width
-    a_y = (lamb_position.y+lamb_size.height)/@size.height
-    @setAnchorPoint a_x, a_y
-    @runAction cc.sequence  cc.EaseIn.create(cc.scaleTo(0.4, 3), 5),
+    scale         = 1.6 + 4*(1 - lamb.lamb_node.getScaleY()*2)
+    @elements.setAnchorPoint (lamb_position.x/@size.width), (lamb_position.y/@size.height)
+    reposition = @elements.getAnchorPointInPoints()
+    @elements.setPosition reposition.x, reposition.y
+    x = reposition.x - (reposition.x - @size.width/2)
+    y = reposition.y - (reposition.y - @size.height/2)-lamb_size.height
+
+    @elements.runAction cc.sequence cc.spawn(cc.EaseIn.create(cc.moveTo(0.4, cc.p(x, y)), 5) , cc.EaseIn.create(cc.scaleTo(0.4, scale), 5)),
                             new cc.CallFunc -> lamb.speak()
 
 
   stop_all_lambs: ->
     _(@lambs).each (lamb) -> lamb.stop()
 
+
+  _render_game_elements: ->
+    @elements = new cc.Node
+    @elements.size = @size
+    @elements.attr width: @size.width, height: @size.height
+    @elements.setAnchorPoint 0, 0
+
+    @_render_background()
+    @_render_lambs()
+    @addChild @elements
+
+  _render_background: ->
+    @background = new App.Scenes.Stage.BackgroundNode
+    @elements.addChild @background, 0
 
   _render_lambs: ->
     @lambs = []
@@ -50,15 +70,11 @@ class App.Scenes.StageScene extends cc.Scene
         scale: 0.5-(y/@size.height*0.45), x: x, y: y
 
       @lambs.push lamb
-      @addChild lamb, 640+(y*-1)
+      @elements.addChild lamb, 640+(y*-1)
 
     window.lambs = @lambs
 
-  _render_background: ->
-    @background = new App.Scenes.Stage.BackgroundNode
-    @addChild @background, 1
-
-  _render_labels: ->
+  _render_game_overlays: ->
     @labels = new App.Scenes.Stage.LabelsNode
     @labels.attr x: 0, y: 0, width: @size.width, height: @size.height
     @addChild @labels, 700
