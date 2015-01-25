@@ -27,9 +27,15 @@ class Room extends Backbone.Model
   as_json: ->
     lambs: @lambs.toJSON()
 
-  is_full: -> @players.length is 2
+  is_full: -> @players[0] && @players[1]
+
+  left_user: (user) ->
+    console.log @players
+    user_index = _(@players).indexOf user
+    @players[user_index] = null
 
   start_pvp: ->
+    @active = true
     @init_data()
     _(@players).each (player) => player.room = this
     @emit_each 'pvp-started', @as_json()

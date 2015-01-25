@@ -11,6 +11,8 @@ window.res =
     sprite: 'assets/sprites/pvp-landing.png'
     background: 'assets/backgrounds/pvp-landing.png'
 
+  ending: 'assets/sprites/ending-messages.png'
+
   stage:
     lamb: 'assets/sprites/lamb.png'
     enermy_lamb: 'assets/sprites/enermy-lamb.png'

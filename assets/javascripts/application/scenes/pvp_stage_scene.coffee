@@ -6,6 +6,7 @@ class App.Scenes.PVPStageScene extends App.Scenes.Stage.BaseScene
     @options = options
 
     @_render_game_elements()
+    @_render_game_overlays()
     @_render_lambs()
     @_set_events()
 
@@ -18,6 +19,11 @@ class App.Scenes.PVPStageScene extends App.Scenes.Stage.BaseScene
     lamb._pvp_lamb_id = data.id
     @_lambs_by_id[data.id] = lamb
 
+  _render_game_overlays: ->
+    @labels = new App.Scenes.Stage.PVPLabelsNode
+    @labels.attr x: 0, y: 0, width: @size.width, height: @size.height
+    @addChild @labels, 700
+
   _render_lambs: ->
     @_lambs_by_id = {}
     _(@options.lambs).each (data) => @add_lamb data
@@ -26,11 +32,15 @@ class App.Scenes.PVPStageScene extends App.Scenes.Stage.BaseScene
   _set_events: ->
     @on 'pvp-won', (lamb) =>
       @stop_all_lambs()
-      @zoom_lamb lamb, => lamb.speak()
+      @zoom_lamb lamb, =>
+        lamb.speak()
+        @labels.active_pvp_won()
 
     @on 'pvp-lost', (lamb) =>
       @stop_all_lambs()
-      @zoom_lamb lamb, => lamb.speak()
+      @zoom_lamb lamb, =>
+        lamb.speak()
+        @labels.active_pvp_lost()
 
 
   get_lamb: (id) -> @_lambs_by_id[id]

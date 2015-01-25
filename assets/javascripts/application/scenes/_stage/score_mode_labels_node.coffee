@@ -4,6 +4,7 @@ class App.Scenes.Stage.ScoreModelLabelsNode extends cc.Node
     @_render_current_score()
     @_render_back_button()
     @_render_restart_button()
+    @_render_lost_image()
 
   _render_current_score: ->
     @score_label = new App.Scenes.Stage.Labels.NumbersNode numbers: 0, align: 'right'
@@ -22,9 +23,16 @@ class App.Scenes.Stage.ScoreModelLabelsNode extends cc.Node
                             new App.Scenes.ScoreStageScene(had_tutorial: true),
                             new cc.Color(0,0,0);
 
+  _render_lost_image: ->
+    @lost_image = new cc.Sprite res.ending, new cc.Rect(0, 0, 1136, 120);
+    @lost_image.setAnchorPoint 0, 0
+    @lost_image.attr x: 0, y: 240, opacity: 0
+    @addChild @lost_image
+
 
   active_restart_button: ->
-    @restart_button.runAction cc.sequence cc.fadeIn(0.4), new cc.CallFunc =>
+    @lost_image.runAction cc.sequence new cc.DelayTime(0.5), cc.fadeIn(0.4)
+    @restart_button.runAction cc.sequence new cc.DelayTime(0.5), cc.fadeIn(0.4), new cc.CallFunc =>
       @parent.touchables = [@restart_button, @back_button]
 
 

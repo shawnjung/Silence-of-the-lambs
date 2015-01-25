@@ -12,6 +12,8 @@ class User extends Backbone.Model
     'create-room': 'create_room'
     'join-room': 'join_room'
     'touch-lamb': 'update_lamb'
+    'left-room': 'left_room'
+    'restart-pvp': 'restart_pvp'
 
     'disconnect': 'disconnect'
 
@@ -37,6 +39,18 @@ class User extends Backbone.Model
       room.set_player this, as: 1
       room.start_pvp()
 
+
+  left_room: ->
+    @room.end_pvp loser: this, lamb: @room.lambs.first()
+    @room.left_user this
+
+
+  restart_pvp: ->
+    if @room.is_full()
+      @room.start_pvp()
+    else
+      @socket.emit 'left-player'
+
   update_lamb: (socket, params) ->
     # @room is defined when the room starts pvp
     if lamb = @room.lambs.get params.id
@@ -56,6 +70,7 @@ class User extends Backbone.Model
         @room.end_pvp loser: this, lamb: lamb
 
   disconnect: ->
+    @left_room() if @room
     @collection.remove this
 
 
