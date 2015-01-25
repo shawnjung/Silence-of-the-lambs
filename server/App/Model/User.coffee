@@ -26,7 +26,6 @@ class User extends Backbone.Model
     room.init_data()
     room.set_player this, as: 0
 
-
     @socket.emit 'room-created', room_id: room.id
 
 
@@ -42,10 +41,16 @@ class User extends Backbone.Model
     # @room is defined when the room starts pvp
     if lamb = @room.lambs.get params.id
       if lamb.is_owner this
+        start_time = lamb.start_time
+        patience_was = lamb.get 'patience'
         new_patience = _(_.range(7,20)).sample()
         lamb.set 'patience', new_patience
         @room.emit_each 'reset-lamb', id: lamb.id, patience: new_patience
         lamb.renew_counter()
+
+        end_time = new Date().getTime()
+        rest_second = patience_was - (end_time - start_time) / 1000
+        @room.add_lamb by: this if rest_second < patience_was/8
 
       else
         @room.end_pvp loser: this, lamb: lamb

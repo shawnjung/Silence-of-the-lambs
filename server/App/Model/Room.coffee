@@ -14,7 +14,15 @@ class Room extends Backbone.Model
     _(@players).each (player, index) =>
       _(3).times =>
         lamb = @lambs.add id: uuid.v4()
-        lamb.set_owner player, index
+        lamb.set_owner player
+
+
+  add_lamb: (options) ->
+    _(@players).each (player) =>
+      if player isnt options.by
+        lamb = @lambs.add id: uuid.v4()
+        lamb.set_owner player
+        @emit_each 'add-lamb', lamb.toJSON()
 
   as_json: ->
     lambs: @lambs.toJSON()

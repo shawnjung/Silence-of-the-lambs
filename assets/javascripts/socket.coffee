@@ -16,7 +16,7 @@ $socket.on 'reset-lamb', (response) =>
   lamb_controller.reset response
 
 $socket.on 'add-lamb', (response) =>
-  $socket._pvp_stage_scene.render_lamb response
+  $socket._pvp_stage_scene.add_lamb response
 
 $socket.on 'pvp-won', (response) =>
   lamb_controller = $socket._pvp_stage_scene.get_lamb response.lamb_id

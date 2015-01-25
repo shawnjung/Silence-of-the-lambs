@@ -1,5 +1,5 @@
 class Lamb extends Backbone.Model
-  dive_delay: 1.4
+  dive_delay: 1.5
   initialize: (attributes, options)->
     @init_attributes()
 
@@ -12,7 +12,7 @@ class Lamb extends Backbone.Model
       direction:     _(['left','right']).sample()
       delay:         Math.random()
 
-  set_owner: (user, index) ->
+  set_owner: (user) ->
     @owner = user
     @set owner_id: user.id
 
@@ -29,6 +29,7 @@ class Lamb extends Backbone.Model
 
   renew_counter: ->
     clearTimeout @_timer if @_timer
+    @start_time = new Date().getTime()
     @_timer = setTimeout =>
       @expire()
     , @get('patience')*1000

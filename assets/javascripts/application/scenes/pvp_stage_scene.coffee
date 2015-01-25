@@ -12,14 +12,15 @@ class App.Scenes.PVPStageScene extends App.Scenes.Stage.BaseScene
     @_startEventListener()
 
 
+  add_lamb: (data) ->
+    data.skin = 'enermy' if data.owner_id isnt $socket._pvp_id
+    lamb = @render_lamb data
+    lamb._pvp_lamb_id = data.id
+    @_lambs_by_id[data.id] = lamb
 
   _render_lambs: ->
     @_lambs_by_id = {}
-    _(@options.lambs).each (lamb_data) =>
-      lamb_data.skin = 'enermy' if lamb_data.owner_id isnt $socket._pvp_id
-      lamb = @render_lamb lamb_data
-      lamb._pvp_lamb_id = lamb_data.id
-      @_lambs_by_id[lamb_data.id] = lamb
+    _(@options.lambs).each (data) => @add_lamb data
 
 
   _set_events: ->
