@@ -6,7 +6,6 @@ class Application
 
     @io.sockets.on 'connection', (socket) =>
       user = new App.Model.User id: uuid.v1(), {app: this, socket: socket}
-      console.log user.id
       @users.add user
 
     setInterval =>

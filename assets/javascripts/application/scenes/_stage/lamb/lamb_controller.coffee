@@ -6,10 +6,13 @@ class App.Scenes.Stage.LambController extends App.NodeController
   active:   true
   direction: 'right'
 
-  initialize: ->
-    @speed_per_sec = (300 - 200) + Math.random()*200
+  initialize: (options) ->
+    @patience      = options.patience
+    @speed_per_sec = options.speed_per_sec
+
     @lamb_node = new App.Scenes.Stage.LambNode
     @gauge_node = new App.Scenes.Stage.GaugeNode
+
     @addChild @lamb_node, 1
     @addChild @gauge_node, 2
 
@@ -22,7 +25,6 @@ class App.Scenes.Stage.LambController extends App.NodeController
 
   start: ->
     @gauge_node.runAction cc.sequence cc.show()
-    @patience = _(@parent.parent.patience_levels).sample()
     @gauge_node.start()
     @move_around 0, @parent.size.width
     @_start_time = new Date().getTime()
@@ -34,9 +36,9 @@ class App.Scenes.Stage.LambController extends App.NodeController
     @gauge_node.stop()
     @gauge_node.runAction cc.hide()
 
-  reset: ->
+  reset: (options) ->
     @_start_time = new Date().getTime()
-    @patience = _(@parent.parent.patience_levels).sample()
+    @patience = options.patience
     @gauge_node.reset()
 
 
@@ -57,7 +59,7 @@ class App.Scenes.Stage.LambController extends App.NodeController
       if rest_time < spent_time
         @parent.parent.trigger 'score-earned', parseInt score
         @_render_score_overlay parseInt score
-      @reset()
+      @reset patience: _(@parent.parent.patience_levels).sample()
 
 
 

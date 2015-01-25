@@ -18,8 +18,7 @@ class App.Scenes.ScoreStageScene extends App.Scenes.Stage.BaseScene
 
     guide_lamb = new App.Scenes.Stage.LambController
       scale: 0.8, x: @size.width/2, y: 120
-
-    guide_lamb.patience = 5
+      patience: 5, direction: 'right'
 
     finger = new App.Scenes.Stage.FingerNode
     arrow  = new cc.Sprite res.stage.lamb, new cc.Rect(840, 330, 40, 18);
@@ -58,8 +57,6 @@ class App.Scenes.ScoreStageScene extends App.Scenes.Stage.BaseScene
 
       @stop_all_lambs()
       @zoom_lamb lamb, =>
-        console.log 'wtf'
-        console.log @labels
         @labels.active_restart_button()
         lamb.speak()
 
@@ -67,4 +64,5 @@ class App.Scenes.ScoreStageScene extends App.Scenes.Stage.BaseScene
       @score_earned++
       @current_score += score
       @labels.score_label.update @current_score
-      @render_lamb() if @score_earned%5 is 0
+      if @score_earned%5 is 0
+        @render_lamb @_attributes_for_random_lamb()

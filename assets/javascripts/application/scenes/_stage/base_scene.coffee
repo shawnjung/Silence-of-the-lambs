@@ -47,17 +47,17 @@ class App.Scenes.Stage.BaseScene extends cc.Scene
     @lambs = []
     _(_.range(0, @lambs_count)).each =>
       @runAction cc.sequence new cc.DelayTime(1*Math.random()), new cc.CallFunc =>
-        @render_lamb()
+        @render_lamb @_attributes_for_random_lamb()
 
-  render_lamb: ->
-    line_index = _(_.range(0, 5)).sample()
-    @lines[line_index].push 1
-
+  render_lamb: (options)->
+    @lines[options.line].push 1
     x = parseInt Math.random() * @size.width
-    y = @y_lines[line_index]+20 + @lines[line_index].length*15
+    y = @y_lines[options.line]+20 + @lines[options.line].length*15
 
     lamb = new App.Scenes.Stage.LambController
       scale: 0.5-(y/@size.height*0.45), x: x, y: y
+      patience: options.patience, direction: options.direction
+      speed_per_sec: options.speed_per_sec
 
     @touchables.push lamb
     @lambs.push lamb
@@ -101,3 +101,8 @@ class App.Scenes.Stage.BaseScene extends cc.Scene
 
 
 
+  _attributes_for_random_lamb: ->
+    line:      _(_.range(0, 5)).sample()
+    patience:  _(@patience_levels).sample()
+    direction: _(['left', 'right']).sample()
+    speed_per_sec: (300 - 200) + Math.random()*200
