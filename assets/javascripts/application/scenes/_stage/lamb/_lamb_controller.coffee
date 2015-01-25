@@ -5,16 +5,21 @@ class App.Scenes.Stage.LambController extends cc.Node
   moving:   false
   active:   true
   direction: 'right'
+  skins:
+    mine: res.stage.lamb
+    enermy: res.stage.enermy_lamb
 
   constructor: (options)->
     super
+    @stage = options.stage
+    @skin  = options.skin or 'mine'
     @setAnchorPoint 0.5, 0
     @options = options or {}
 
     @patience      = options.patience
     @speed_per_sec = options.speed_per_sec
 
-    @lamb_node = new App.Scenes.Stage.LambNode
+    @lamb_node = new App.Scenes.Stage.LambNode skin: @skins[@skin]
     @gauge_node = new App.Scenes.Stage.GaugeNode
 
     @addChild @lamb_node, 1
@@ -22,10 +27,9 @@ class App.Scenes.Stage.LambController extends cc.Node
 
     @main_node = @lamb_node
 
-    @on 'time-over', => @parent.trigger 'time-over', this
+    @on 'time-over', => @stage.trigger 'time-over', this
 
-  events:
-    'touchstart': 'earn_score'
+  events: {}
 
 
   onEnter: ->
@@ -39,7 +43,7 @@ class App.Scenes.Stage.LambController extends cc.Node
   start: ->
     @gauge_node.runAction cc.sequence cc.show()
     @gauge_node.start()
-    @move_around 0, @parent.size.width
+    @move_around 0, @stage.size.width
     @_start_time = new Date().getTime()
 
   stop: ->
@@ -53,27 +57,6 @@ class App.Scenes.Stage.LambController extends cc.Node
     @_start_time = new Date().getTime()
     @patience = options.patience
     @gauge_node.reset()
-
-
-  earn_score:  ->
-    if @active
-      end_time   = new Date().getTime()
-      spent_time = parseInt((end_time - @_start_time)/1000*100)/100
-      rest_time  = @patience - spent_time
-
-      total_score = @patience*1.6
-
-      if rest_time < @patience/10
-        score = total_score*2
-      else
-        spent_score = rest_time*1.6
-        score = total_score - spent_score
-
-      if rest_time < spent_time
-        @parent.parent.trigger 'score-earned', parseInt score
-        @_render_score_overlay parseInt score
-      @reset patience: _(@parent.parent.patience_levels).sample()
-
 
 
   _render_score_overlay: (score) ->
@@ -207,7 +190,7 @@ class App.Scenes.Stage.LambController extends cc.Node
     half_width = size.width / 2
 
     @minimum = half_width
-    @maximum = @parent.size.width - half_width
+    @maximum = @stage.size.width - half_width
 
     @options.x = @maximum if @options.x > @maximum
     @options.x = @minimum if @options.x < @minimum

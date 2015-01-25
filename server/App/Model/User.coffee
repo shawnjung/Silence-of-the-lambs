@@ -11,7 +11,10 @@ class User extends Backbone.Model
     'ping': 'pong'
     'create-room': 'create_room'
     'join-room': 'join_room'
+    'touch-lamb': 'update_lamb'
+
     'disconnect': 'disconnect'
+
 
 
   pong: ->
@@ -35,14 +38,20 @@ class User extends Backbone.Model
       room.set_player this, as: 1
       room.start_pvp()
 
+  update_lamb: (socket, params) ->
+    # @room is defined when the room starts pvp
+    if lamb = @room.lambs.get params.id
+      if lamb.is_owner this
+        new_patience = _(_.range(7,20)).sample()
+        lamb.set 'patience', new_patience
+        @room.emit_each 'reset-lamb', id: lamb.id, patience: new_patience
+        lamb.renew_counter()
 
-
+      else
+        @room.end_pvp loser: this, lamb: lamb
 
   disconnect: ->
     @collection.remove this
-
-
-
 
 
 

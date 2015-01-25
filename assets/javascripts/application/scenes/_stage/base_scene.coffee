@@ -50,13 +50,14 @@ class App.Scenes.Stage.BaseScene extends cc.Scene
 
   render_lamb: (options)->
     @lines[options.line].push 1
-    x = parseInt Math.random() * @size.width
+    x = parseInt(@size.width * options.x)
     y = @y_lines[options.line]+20 + @lines[options.line].length*15
 
-    lamb = new App.Scenes.Stage.LambController
+    lamb = new @lamb_controller
       scale: 0.5-(y/@size.height*0.45), x: x, y: y
       patience: options.patience, direction: options.direction
       speed_per_sec: options.speed_per_sec, opacity: 0
+      skin: options.skin, stage: this
 
     @touchables.push lamb
     @lambs.push lamb
@@ -64,6 +65,8 @@ class App.Scenes.Stage.BaseScene extends cc.Scene
     @runAction cc.sequence new cc.DelayTime(options.delay), new cc.CallFunc =>
       @elements.addChild lamb, 640+(y*-1)
       lamb.dive => lamb.start()
+
+    lamb
 
 
 
@@ -97,8 +100,9 @@ class App.Scenes.Stage.BaseScene extends cc.Scene
 
 
   _attributes_for_random_lamb: ->
-    line:      _(_.range(0, 5)).sample()
-    patience:  _(@patience_levels).sample()
-    direction: _(['left', 'right']).sample()
+    x:             Math.random()
+    line:          _(_.range(0, 5)).sample()
+    patience:      _(@patience_levels).sample()
+    direction:     _(['left', 'right']).sample()
     speed_per_sec: (300 - 200) + Math.random()*200
-    delay: 1*Math.random()
+    delay:         Math.random()

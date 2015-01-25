@@ -1,6 +1,7 @@
 class App.Scenes.Stage.LambNode extends cc.Node
-  constructor: ->
+  constructor: (options) ->
     super
+    @skin = options.skin or res.stage.lamb
     @setAnchorPoint 0.5, 0
     @setContentSize 540, 396
 
@@ -15,7 +16,7 @@ class App.Scenes.Stage.LambNode extends cc.Node
 
 
   _create_sprite: (x1, y1, x2, y2) ->
-    output = new cc.Sprite res.stage.lamb, new cc.Rect(x1,y1,x2,y2);
+    output = new cc.Sprite @skin, new cc.Rect(x1,y1,x2,y2);
     output.setAnchorPoint 0, 0
     output
 

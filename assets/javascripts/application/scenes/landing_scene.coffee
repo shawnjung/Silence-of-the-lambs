@@ -1,4 +1,5 @@
 class App.Scenes.LandingScene extends cc.Scene
+  animation_speed: 0.01
   onEnter: ->
     super
     @size = cc.winSize
@@ -16,14 +17,14 @@ class App.Scenes.LandingScene extends cc.Scene
     @lamb_face = new cc.Sprite res.landing.background
     @lamb_face.attr x: @size.width/2, y: @size.height/2, opacity: 0
     @addChild @lamb_face
-    @lamb_face.runAction cc.sequence cc.fadeIn 1.6, 3
+    @lamb_face.runAction cc.sequence cc.fadeIn @ani_speed(1.6), 3
 
   _render_title: ->
     @title = @_create_sprite 0, 0, 416, 20
     @title.attr x: @size.width/2, y: 200, opacity: 0, scale: 1.2
     @title.setAnchorPoint 0.5, 0
     @addChild @title
-    @title.runAction cc.sequence new cc.DelayTime(1.6), cc.spawn(cc.fadeIn(1.0, 3), cc.scaleTo(1, 1))
+    @title.runAction cc.sequence new cc.DelayTime(@ani_speed(1.6)), cc.spawn(cc.fadeIn(@ani_speed(1.0), 3), cc.scaleTo(@ani_speed(1), 1))
 
 
   _render_menus: ->
@@ -35,8 +36,8 @@ class App.Scenes.LandingScene extends cc.Scene
 
     @addChild @score_button
     @addChild @pvp_button
-    @score_button.runAction cc.sequence new cc.DelayTime(3), cc.spawn(cc.fadeIn(1.0, 3))
-    @pvp_button.runAction   cc.sequence new cc.DelayTime(3.4), cc.spawn(cc.fadeIn(1.0, 3))
+    @score_button.runAction cc.sequence new cc.DelayTime(@ani_speed(3)), cc.spawn(cc.fadeIn(@ani_speed(1.0), 3))
+    @pvp_button.runAction   cc.sequence new cc.DelayTime(@ani_speed(3.4)), cc.spawn(cc.fadeIn(@ani_speed(1.0), 3))
 
     @touchables.push @score_button
     @touchables.push @pvp_button
@@ -53,13 +54,13 @@ class App.Scenes.LandingScene extends cc.Scene
     @copyright = @_create_sprite 2, 39, 300, 14
     @copyright.attr x: @size.width/2-150, y: 20, opacity: 0
     @addChild @copyright
-    @copyright.runAction cc.sequence new cc.DelayTime(3.8), cc.spawn(cc.fadeIn(1.0, 3))
+    @copyright.runAction cc.sequence new cc.DelayTime(@ani_speed(3.8)), cc.spawn(cc.fadeIn(@ani_speed(1.0), 3))
 
   _render_common_cc: ->
     @common_cc = @_create_sprite 440, 0, 126, 40
     @common_cc.attr x: @size.width-136, y: 10, opacity: 0
     @addChild @common_cc
-    @common_cc.runAction cc.sequence new cc.DelayTime(4.1), cc.spawn(cc.fadeIn(1.0, 3))
+    @common_cc.runAction cc.sequence new cc.DelayTime(@ani_speed(4.1)), cc.spawn(cc.fadeIn(@ani_speed(1.0), 3))
 
 
   _create_sprite: (x1, y1, x2, y2) ->
@@ -96,3 +97,4 @@ class App.Scenes.LandingScene extends cc.Scene
 
 
 
+  ani_speed: (second) -> second * @animation_speed

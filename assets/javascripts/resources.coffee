@@ -13,6 +13,8 @@ window.res =
 
   stage:
     lamb: 'assets/sprites/lamb.png'
+    enermy_lamb: 'assets/sprites/enermy-lamb.png'
+
     labels:
       numbers: 'assets/sprites/numbers.png'
     backgrounds:

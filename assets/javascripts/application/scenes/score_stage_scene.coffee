@@ -1,4 +1,5 @@
 class App.Scenes.ScoreStageScene extends App.Scenes.Stage.BaseScene
+  lamb_controller: App.Scenes.Stage.ScoreLambController
   constructor: (options = {}) ->
     @options = options
     super
@@ -16,9 +17,9 @@ class App.Scenes.ScoreStageScene extends App.Scenes.Stage.BaseScene
   _start_tutorial: (callback) ->
     return callback() if @options.had_tutorial
 
-    guide_lamb = new App.Scenes.Stage.LambController
+    guide_lamb = new @lamb_controller
       scale: 0.8, x: @size.width/2, y: 120
-      patience: 5, direction: 'right'
+      patience: 5, direction: 'right', stage: this
 
     finger = new App.Scenes.Stage.FingerNode
     arrow  = new cc.Sprite res.stage.lamb, new cc.Rect(840, 330, 40, 18);
@@ -53,7 +54,7 @@ class App.Scenes.ScoreStageScene extends App.Scenes.Stage.BaseScene
     @_render_lambs()
     @score_earned = 0
 
-    @elements.on 'time-over', (lamb) =>
+    @on 'time-over', (lamb) =>
 
       @stop_all_lambs()
       @zoom_lamb lamb, =>

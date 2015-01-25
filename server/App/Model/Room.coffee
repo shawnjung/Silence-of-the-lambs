@@ -1,12 +1,15 @@
 class Room extends Backbone.Model
+  active: true
   initialize: ->
     @players = []
     @lambs   = new App.Collection.Lambs [], model: App.Model.Lamb
+    @lambs.room = this
 
   set_player: (player, options)->
     @players[options.as] = player
 
   init_data: ->
+    @active = true
     @lambs.reset()
     _(@players).each (player, index) =>
       _(3).times =>
@@ -20,7 +23,20 @@ class Room extends Backbone.Model
 
   start_pvp: ->
     @init_data()
+    _(@players).each (player) => player.room = this
     @emit_each 'pvp-started', @as_json()
+    @lambs.each (lamb) -> lamb.start_counter with_delay: true
+
+  end_pvp: (options) ->
+    if @active
+      @active = false
+      _(@players).each (player) =>
+        if player is options.loser
+          player.socket.emit 'pvp-lost', lamb_id: options.lamb.id
+        else
+          player.socket.emit 'pvp-won', lamb_id: options.lamb.id
+
+
 
   emit_each: (command, params) ->
     _(@players).each (player) ->
