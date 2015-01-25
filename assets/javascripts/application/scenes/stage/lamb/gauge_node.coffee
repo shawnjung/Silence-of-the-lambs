@@ -15,17 +15,23 @@ class App.Scenes.Stage.GaugeNode extends cc.Node
 
 
   start: (options, callback) ->
-    finished = new cc.CallFunc -> callback()
-    @gauge_animation  = cc.sequence cc.scaleTo(options.patience, 1, 1),
-                                    finished
+    @bar.runAction @_create_gauge_animation()
 
-    @bar.runAction @gauge_animation
 
-  reset: ->
-    @bar.stopAction @gauge_animation
+  reset: (options) ->
+    @bar.stopAllActions()
     @bar.setScaleX 0
-    @bar.runAction @gauge_animation
 
+    @bar.runAction @_create_gauge_animation()
+
+
+  stop: ->
+    @bar.stopAllActions()
+
+
+  _create_gauge_animation: ->
+    cc.sequence cc.scaleTo(@parent.patience, 1, 1),
+                new cc.CallFunc => @parent.trigger 'time-over'
 
 
   _create_sprite: (x1, y1, x2, y2) ->

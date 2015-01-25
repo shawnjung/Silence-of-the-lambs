@@ -5,6 +5,7 @@
 window.App =
   Scenes:
     Stage:
+      Labels: {}
       Background: {}
       #Layers: {}
 

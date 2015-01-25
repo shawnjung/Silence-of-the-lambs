@@ -7,7 +7,11 @@ class App.Scenes.Stage.LambNode extends cc.Node
     @_render_body()
     @_render_face()
     @_render_legs()
+    @_render_shadow()
 
+
+  stop: ->
+    _(@legs).each (leg) -> leg.stopAllActions()
 
 
   _create_sprite: (x1, y1, x2, y2) ->
@@ -48,3 +52,8 @@ class App.Scenes.Stage.LambNode extends cc.Node
     @face.attr x: 400, y: 250
 
     @addChild @face, 11
+
+  _render_shadow: ->
+    @shadow = @_create_sprite 0, 340, 540, 80
+    @shadow.attr y: -30
+    @addChild @shadow, 0

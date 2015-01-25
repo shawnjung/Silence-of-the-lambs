@@ -3,8 +3,9 @@ class App.Scenes.Stage.LambController extends App.NodeController
   speaking: false
   walking:  false
   moving:   false
+  active:   true
   direction: 'right'
-  patience_levels: _.range(10,20)
+  patience_levels: _.range(7,20)
 
   initialize: ->
     @patience = _(@patience_levels).sample()
@@ -15,22 +16,57 @@ class App.Scenes.Stage.LambController extends App.NodeController
 
     @main_node = @lamb_node
 
+    @on 'time-over', => @parent.trigger 'time-over', this
+
   events:
     'enter': 'start'
-    'touchstart': 'smile_and_move'
+    'touchstart': 'earn_score'
 
   start: ->
-    @start_patience_gauge()
+    @gauge_node.start()
     @set_direction @options.direction
     @move_around 0, @parent.size.width
+    @_start_time = new Date().getTime()
 
+  stop: ->
+    @active = false
+    @stopAllActions()
+    @lamb_node.stop()
+    @gauge_node.stop()
 
-
-  start_patience_gauge: ->
-    @gauge_node.start patience: @patience, => @speak()
-
-  smile_and_move:  ->
+  reset: ->
+    @_start_time = new Date().getTime()
+    @patience = _(@patience_levels).sample()
     @gauge_node.reset()
+
+
+  earn_score:  ->
+    if @active
+      end_time   = new Date().getTime()
+      spent_time = parseInt((end_time - @_start_time)/1000*100)/100
+
+      total_score = @patience*2
+      spent_score = (@patience - spent_time)*2
+
+      score = parseInt total_score - spent_score
+
+      if score > 4
+        @parent.trigger 'score-earned', score
+        @_render_score_overlay score
+      @reset()
+
+
+
+  _render_score_overlay: (score) ->
+    size = @getContentSize()
+    score_label = new App.Scenes.Stage.Labels.NumbersNode numbers: score, align: 'center'
+    scale = 0.2
+    scale = 0.3 if score > 15
+    scale = 0.5 if score > 30
+    score_label.attr x: size.width/2, y: size.height, scale: scale
+    score_label.fade_in_then_out => @removeChild score_label, true
+    @addChild score_label, 20
+
 
 
   move: (distance) ->

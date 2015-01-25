@@ -6,6 +6,8 @@ window.res =
 
   stage:
     lamb: 'assets/sprites/lamb.png'
+    labels:
+      numbers: 'assets/sprites/numbers.png'
     backgrounds:
       grass: 'assets/backgrounds/grass.png'
 
