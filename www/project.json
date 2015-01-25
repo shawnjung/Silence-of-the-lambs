@@ -13,6 +13,7 @@
     "jsList" : [
         "assets/underscore.js",
         "assets/resources.js",
-        "assets/application.js"
+        "assets/application.js",
+        "assets/socket.js"
     ]
 }

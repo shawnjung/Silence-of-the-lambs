@@ -8,6 +8,7 @@ class App.Scenes.PVPLandingScene extends cc.Scene
     @_render_title()
     @_render_button()
     @_render_room_id()
+    @_render_back_button()
 
     @_startEventListener()
 
@@ -34,8 +35,14 @@ class App.Scenes.PVPLandingScene extends cc.Scene
     @touchables.push @button
 
     @button.onTouchBegan = =>
-      room_number = prompt 'Please provide 5 digits number:'
-      console.log room_number
+      room_id = prompt 'Please provide 5 digits number:'
+      if room_id is @options.room_id
+        alert "That's your room number."
+      else if room_id
+        $socket.emit 'join-room', room_id: room_id
+      else
+        alert 'Please put a room number.'
+      false
 
   _render_room_id: ->
     @numbers = []
@@ -76,3 +83,13 @@ class App.Scenes.PVPLandingScene extends cc.Scene
 
 
 
+  _render_back_button: ->
+    @back_button = new cc.Sprite res.stage.lamb, new cc.Rect(0, 430, 110, 106);
+    @back_button.setAnchorPoint 0, 0
+    @back_button.attr x: 10, y: 550, scale: 0.7
+    @addChild @back_button
+
+    @touchables.push @back_button
+
+    @back_button.onTouchBegan = =>
+      cc.director.runScene cc.TransitionFade.create 1, new App.Scenes.LandingScene, new cc.Color(0,0,0);

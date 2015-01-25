@@ -8,6 +8,7 @@ class User extends Backbone.Model
   events:
     'ping': 'pong'
     'create-room': 'create_room'
+    'join-room': 'join_room'
     'disconnect': 'disconnect'
 
 
@@ -16,7 +17,23 @@ class User extends Backbone.Model
 
 
   create_room: ->
-    @socket.emit 'room-created', room_id: @app.rooms.create_id()
+    room = @app.rooms.add id: @app.rooms.create_id()
+    room.init_data()
+    room.set_player this, as: 0
+
+
+    @socket.emit 'room-created', room_id: room.id
+
+
+  join_room: (socket, params) ->
+    room = @app.rooms.get(params.room_id)
+    if not room or room.is_full()
+      @socket.emit 'invalid-room'
+    else
+      room.set_player this, as: 1
+      room.start_pvp()
+
+
 
 
   disconnect: ->
