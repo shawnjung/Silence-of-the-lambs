@@ -44,7 +44,7 @@ class App.Scenes.LandingScene extends cc.Scene
     @score_button.onTouchBegan = =>
       cc.director.runScene cc.TransitionFade.create 1, new App.Scenes.ScoreStageScene, new cc.Color(0,0,0);
 
-    @pvp_button.onTouchBegan = => console.log 'pvp_mode'
+    @pvp_button.onTouchBegan = => alert 'working for this now'
 
 
   _render_copyright: ->
