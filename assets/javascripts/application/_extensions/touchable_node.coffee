@@ -60,7 +60,6 @@ class App.NodeController extends cc.Node
     @setPosition @options.x, @options.y
 
   onEnter: ->
-    console.log 'wtf'
     @_set_scale() if @options.scale
     @_set_position() if @options.x isnt undefined and @options.y isnt undefined
     super

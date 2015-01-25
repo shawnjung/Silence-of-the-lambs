@@ -22,7 +22,7 @@ class App.Scenes.Stage.BaseScene extends cc.Scene
     y = reposition.y - (reposition.y - @size.height/2)-lamb_size.height
 
     @elements.runAction cc.sequence cc.spawn(cc.EaseIn.create(cc.moveTo(0.4, cc.p(x, y)), 5) , cc.EaseIn.create(cc.scaleTo(0.4, scale), 5)),
-                            new cc.CallFunc -> lamb.speak()
+                            new cc.CallFunc -> callback()
 
 
   stop_all_lambs: ->
@@ -66,6 +66,8 @@ class App.Scenes.Stage.BaseScene extends cc.Scene
     @labels = new App.Scenes.Stage.LabelsNode
     @labels.attr x: 0, y: 0, width: @size.width, height: @size.height
     @addChild @labels, 700
+
+
 
 
   _startEventListener: ->

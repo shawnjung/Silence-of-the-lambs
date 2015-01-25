@@ -6,6 +6,6 @@ cc.game.onStart = ->
 
     # load resources
     cc.LoaderScene.preload resource_urls, ->
-      cc.director.runScene new App.Scenes.LandingScene # new App.Scenes.ScoreStageScene
+      cc.director.runScene new App.Scenes.ScoreStageScene # new App.Scenes.LandingScene # new App.Scenes.ScoreStageScene
 
 cc.game.run()
