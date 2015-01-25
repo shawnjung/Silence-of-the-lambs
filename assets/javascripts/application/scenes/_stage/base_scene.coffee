@@ -2,7 +2,7 @@ class App.Scenes.Stage.BaseScene extends cc.Scene
   lambs_count: 5
   patience_levels: _.range(7,20)
   current_score: 0
-  y_lines: [0, 100, 200, 280, 360, 440, 420]
+  y_lines: [0, 100, 200, 280, 360, 440]
 
   constructor: ->
     super
@@ -48,7 +48,7 @@ class App.Scenes.Stage.BaseScene extends cc.Scene
     _(_.range(0, @lambs_count)).each => @render_lamb()
 
   render_lamb: ->
-    line_index = _(_.range(0, 6)).sample()
+    line_index = _(_.range(0, 5)).sample()
     @lines[line_index].push 1
 
     x = parseInt Math.random() * @size.width
