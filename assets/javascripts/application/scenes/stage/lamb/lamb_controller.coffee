@@ -5,10 +5,9 @@ class App.Scenes.Stage.LambController extends App.NodeController
   moving:   false
   active:   true
   direction: 'right'
-  patience_levels: _.range(7,20)
 
   initialize: ->
-    @patience = _(@patience_levels).sample()
+    @speed_per_sec = (300 - 200) + Math.random()*200
     @lamb_node = new App.Scenes.Stage.LambNode
     @gauge_node = new App.Scenes.Stage.GaugeNode
     @addChild @lamb_node, 0
@@ -23,6 +22,7 @@ class App.Scenes.Stage.LambController extends App.NodeController
     'touchstart': 'earn_score'
 
   start: ->
+    @patience = _(@parent.parent.patience_levels).sample()
     @gauge_node.start()
     @set_direction @options.direction
     @move_around 0, @parent.size.width
@@ -36,7 +36,7 @@ class App.Scenes.Stage.LambController extends App.NodeController
 
   reset: ->
     @_start_time = new Date().getTime()
-    @patience = _(@patience_levels).sample()
+    @patience = _(@parent.parent.patience_levels).sample()
     @gauge_node.reset()
 
 
@@ -44,15 +44,21 @@ class App.Scenes.Stage.LambController extends App.NodeController
     if @active
       end_time   = new Date().getTime()
       spent_time = parseInt((end_time - @_start_time)/1000*100)/100
+      rest_time  = @patience - spent_time
+
+      console.log @patience, spent_time, rest_time
 
       total_score = @patience*1.6
-      spent_score = (@patience - spent_time)*1.6
 
-      score = parseInt total_score - spent_score
+      if rest_time < @patience/10
+        score = total_score*2
+      else
+        spent_score = rest_time*1.6
+        score = total_score - spent_score
 
-      if score > 4
-        @parent.trigger 'score-earned', score
-        @_render_score_overlay score
+      if rest_time < spent_time
+        @parent.parent.trigger 'score-earned', parseInt score
+        @_render_score_overlay parseInt score
       @reset()
 
 

@@ -3,6 +3,9 @@ window.res =
   CloseNormal_png: "res/CloseNormal.png"
   CloseSelected_png: "res/CloseSelected.png"
 
+  landing:
+    sprite: 'assets/sprites/landing.png'
+    background: 'assets/backgrounds/landing.png'
 
   stage:
     lamb: 'assets/sprites/lamb.png'
@@ -10,6 +13,7 @@ window.res =
       numbers: 'assets/sprites/numbers.png'
     backgrounds:
       grass: 'assets/backgrounds/grass.png'
+
 
 
 

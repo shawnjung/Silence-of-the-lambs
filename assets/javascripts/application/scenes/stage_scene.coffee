@@ -1,15 +1,13 @@
 class App.Scenes.StageScene extends cc.Scene
-  lambs_count: 10
+  lambs_count: 5
+  patience_levels: _.range(7,20)
   current_score: 0
-  y_lines: [0, 100, 190, 270, 340, 400, 450, 490]
+  y_lines: [0, 100, 200, 280, 360, 440, 420]
 
   onEnter: ->
     super
     window.stage = this
     @size = cc.winSize
-
-    @setAnchorPoint 0.5, 0.5
-    @setPosition 0, 0
 
     @_render_game_elements()
     @_render_game_overlays()
@@ -61,10 +59,15 @@ class App.Scenes.StageScene extends cc.Scene
     @elements.addChild @background, 0
 
   _render_lambs: ->
+    lines = [[],[],[],[],[],[],[],[],[],[],[]]
     @lambs = []
     _(_.range(0, @lambs_count)).each =>
+      line_index = _(_.range(0, 6)).sample()
+      lines[line_index].push 1
+
       x = parseInt Math.random() * @size.width
-      y = _(@y_lines).sample()+20
+      y = @y_lines[line_index]+20 + lines[line_index].length*15
+
 
       lamb = new App.Scenes.Stage.LambController
         scale: 0.5-(y/@size.height*0.45), x: x, y: y
@@ -106,3 +109,6 @@ class App.Scenes.StageScene extends cc.Scene
 
 
     cc.eventManager.addListener @touchListener, this
+
+
+
