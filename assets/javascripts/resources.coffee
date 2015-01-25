@@ -21,6 +21,10 @@ window.res =
       numbers: 'assets/sprites/numbers.png'
     backgrounds:
       grass: 'assets/backgrounds/grass.png'
+  audio:
+    baaa: 'audio/effects.m4a'
+    background: 'audio/music.m4a'
+    tap: 'audio/tap.m4a'
 
 
 

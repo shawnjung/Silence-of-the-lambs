@@ -142,6 +142,11 @@ class App.Scenes.Stage.LambController extends cc.Node
     unless @speaking
       @speaking = true
       @lamb_node.face.setTextureRect new cc.Rect 891, 200, 99, 74
+      effect = cc.audioEngine.playEffect(res.audio.baaa, false)
+      setTimeout =>
+        cc.audioEngine.stopEffect effect
+      , 3000
+
 
   die: (callback) ->
     @stop()

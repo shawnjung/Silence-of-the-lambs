@@ -3,6 +3,7 @@ class App.Scenes.Stage.ScoreLambController extends App.Scenes.Stage.LambControll
     'touchstart': 'earn_score'
 
   earn_score:  ->
+    cc.audioEngine.playEffect(res.audio.tap, false)
     if @active
       end_time   = new Date().getTime()
       spent_time = parseInt((end_time - @_start_time)/1000*100)/100
