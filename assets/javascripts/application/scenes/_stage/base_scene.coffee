@@ -1,28 +1,13 @@
-class App.Scenes.StageScene extends cc.Scene
+class App.Scenes.Stage.BaseScene extends cc.Scene
   lambs_count: 5
   patience_levels: _.range(7,20)
   current_score: 0
   y_lines: [0, 100, 200, 280, 360, 440, 420]
 
-  onEnter: ->
+  constructor: ->
     super
-    window.stage = this
     @size = cc.winSize
-
-    @_render_game_elements()
-    @_render_game_overlays()
-
-    @elements.on 'time-over', (lamb) =>
-      lamb.speak()
-      @stop_all_lambs()
-      @zoom_lamb lamb, =>
-        lamb.speak()
-
-    @on 'score-earned', (score) =>
-      @current_score += score
-      @labels.score_label.update @current_score
-
-    @_startEventListener()
+    @touchables = []
 
 
   zoom_lamb: (lamb, callback) ->
@@ -51,7 +36,6 @@ class App.Scenes.StageScene extends cc.Scene
     @elements.setAnchorPoint 0, 0
 
     @_render_background()
-    @_render_lambs()
     @addChild @elements
 
   _render_background: ->
@@ -59,23 +43,24 @@ class App.Scenes.StageScene extends cc.Scene
     @elements.addChild @background, 0
 
   _render_lambs: ->
-    lines = [[],[],[],[],[],[],[],[],[],[],[]]
+    @lines = [[],[],[],[],[],[],[],[],[],[],[]]
     @lambs = []
-    _(_.range(0, @lambs_count)).each =>
-      line_index = _(_.range(0, 6)).sample()
-      lines[line_index].push 1
+    _(_.range(0, @lambs_count)).each => @render_lamb()
 
-      x = parseInt Math.random() * @size.width
-      y = @y_lines[line_index]+20 + lines[line_index].length*15
+  render_lamb: ->
+    line_index = _(_.range(0, 6)).sample()
+    @lines[line_index].push 1
 
+    x = parseInt Math.random() * @size.width
+    y = @y_lines[line_index]+20 + @lines[line_index].length*15
 
-      lamb = new App.Scenes.Stage.LambController
-        scale: 0.5-(y/@size.height*0.45), x: x, y: y
+    lamb = new App.Scenes.Stage.LambController
+      scale: 0.5-(y/@size.height*0.45), x: x, y: y
 
-      @lambs.push lamb
-      @elements.addChild lamb, 640+(y*-1)
-
-    window.lambs = @lambs
+    @touchables.push lamb
+    @lambs.push lamb
+    @elements.addChild lamb, 640+(y*-1)
+    lamb.dive => lamb.start()
 
   _render_game_overlays: ->
     @labels = new App.Scenes.Stage.LabelsNode
@@ -88,7 +73,7 @@ class App.Scenes.StageScene extends cc.Scene
       event: cc.EventListener.TOUCH_ONE_BY_ONE
       onTouchBegan: (touch, event) =>
         touched_nodes = []
-        _(@lambs).each (node) ->
+        _(@touchables).each (node) ->
           locationInNode = node.convertToNodeSpace(touch.getLocation())
           size = node.getContentSize()
           rect = cc.rect(0, 0, size.width, size.height)

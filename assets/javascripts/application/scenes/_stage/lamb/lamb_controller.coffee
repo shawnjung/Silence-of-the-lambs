@@ -10,21 +10,20 @@ class App.Scenes.Stage.LambController extends App.NodeController
     @speed_per_sec = (300 - 200) + Math.random()*200
     @lamb_node = new App.Scenes.Stage.LambNode
     @gauge_node = new App.Scenes.Stage.GaugeNode
-    @addChild @lamb_node, 0
-    @addChild @gauge_node, 1
+    @addChild @lamb_node, 1
+    @addChild @gauge_node, 2
 
     @main_node = @lamb_node
 
     @on 'time-over', => @parent.trigger 'time-over', this
 
   events:
-    'enter': 'start'
     'touchstart': 'earn_score'
 
   start: ->
+    @gauge_node.runAction cc.sequence cc.show()
     @patience = _(@parent.parent.patience_levels).sample()
     @gauge_node.start()
-    @set_direction @options.direction
     @move_around 0, @parent.size.width
     @_start_time = new Date().getTime()
 
@@ -33,6 +32,7 @@ class App.Scenes.Stage.LambController extends App.NodeController
     @stopAllActions()
     @lamb_node.stop()
     @gauge_node.stop()
+    @gauge_node.runAction cc.hide()
 
   reset: ->
     @_start_time = new Date().getTime()
@@ -45,8 +45,6 @@ class App.Scenes.Stage.LambController extends App.NodeController
       end_time   = new Date().getTime()
       spent_time = parseInt((end_time - @_start_time)/1000*100)/100
       rest_time  = @patience - spent_time
-
-      console.log @patience, spent_time, rest_time
 
       total_score = @patience*1.6
 
@@ -147,6 +145,28 @@ class App.Scenes.Stage.LambController extends App.NodeController
       @speaking = true
       @lamb_node.face.setTextureRect new cc.Rect 891, 200, 99, 74
 
+  die: (callback) ->
+    @stop()
+    @gauge_node.runAction cc.sequence cc.hide()
+    @lamb_node.runAction cc.sequence cc.EaseIn.create(cc.scaleTo(0.8, 0), 2)
+    @lamb_node.shadow.runAction cc.sequence cc.EaseIn.create(cc.scaleTo(0.8, 0),2), new cc.CallFunc =>
+      @parent.removeChild this, true
+      callback() if callback instanceof Function
+
+
+  dive: (callback) ->
+    @set_direction @options.direction
+    @gauge_node.runAction cc.hide()
+    shadow = @lamb_node.shadow
+    @lamb_node.removeChild shadow, false
+    shadow.setAnchorPoint 0.5, 0.5
+    shadow.attr x: 250*@options.scale, y: 10*@options.scale, scale: 0
+    @addChild shadow
+    @lamb_node.attr y: 1200
+
+    @lamb_node.runAction cc.sequence cc.EaseBounceOut.create(cc.moveTo(1.4, cc.p(@lamb_node.getPosition().x, 0)), 0)
+    @lamb_node.shadow.runAction cc.sequence cc.EaseBounceOut.create(cc.scaleTo(1.4, @options.scale), 0),
+      new cc.CallFunc => callback()
 
   set_direction: (direction) ->
     scale_x   = @lamb_node.getScaleX()
