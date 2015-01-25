@@ -37,7 +37,7 @@ class App.Layers.HelloWorld extends cc.Layer
     ## add a label shows "Hello World"
 
     ## create and initialize a label
-    helloLabel = new cc.LabelTTF "Hello World", "Arial", 38
+    helloLabel = new cc.LabelTTF "Hello World", "Arial", 38, fillStyle: new cc.Color(0,0,0)
 
     ## position the label on the center of the screen
     helloLabel.x = @size.width / 2

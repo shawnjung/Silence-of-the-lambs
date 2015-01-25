@@ -1,0 +1,1 @@
+(function(){cc.game.onStart=function(){return cc.screen._supportsFullScreen=!1,cc.view.adjustViewPort(!0),cc.view.setDesignResolutionSize(1136,640,cc.ResolutionPolicy.SHOW_ALL),cc.view.resizeWithBrowserSize(!0),cc.LoaderScene.preload(resource_urls,function(){return cc.director.runScene(new App.Scenes.LandingScene)})},cc.game.run()}).call(this);

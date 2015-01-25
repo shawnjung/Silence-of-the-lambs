@@ -10,3 +10,5 @@ window.App =
       #Layers: {}
 
   Layers: {}
+
+window.socket_server_url = 'http://localhost:8090'

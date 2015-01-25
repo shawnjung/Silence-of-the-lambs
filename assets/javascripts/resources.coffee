@@ -7,6 +7,10 @@ window.res =
     sprite: 'assets/sprites/landing.png'
     background: 'assets/backgrounds/landing.png'
 
+  pvp_landing:
+    sprite: 'assets/sprites/pvp-landing.png'
+    background: 'assets/backgrounds/pvp-landing.png'
+
   stage:
     lamb: 'assets/sprites/lamb.png'
     labels:

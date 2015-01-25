@@ -44,7 +44,12 @@ class App.Scenes.LandingScene extends cc.Scene
     @score_button.onTouchBegan = =>
       cc.director.runScene cc.TransitionFade.create 1, new App.Scenes.ScoreStageScene, new cc.Color(0,0,0);
 
-    @pvp_button.onTouchBegan = => alert 'working for this now'
+    @pvp_button.onTouchBegan = =>
+      window.$socket = io socket_server_url
+      $socket.on 'room-created', (response) =>
+        cc.director.runScene cc.TransitionFade.create 1, new App.Scenes.PVPLandingScene(response), new cc.Color(0,0,0);
+      $socket.emit 'create-room'
+      false
 
 
   _render_copyright: ->
