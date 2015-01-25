@@ -45,7 +45,9 @@ class App.Scenes.Stage.BaseScene extends cc.Scene
   _render_lambs: ->
     @lines = [[],[],[],[],[],[],[],[],[],[],[]]
     @lambs = []
-    _(_.range(0, @lambs_count)).each => @render_lamb()
+    _(_.range(0, @lambs_count)).each =>
+      @runAction cc.sequence new cc.DelayTime(1*Math.random()), new cc.CallFunc =>
+        @render_lamb()
 
   render_lamb: ->
     line_index = _(_.range(0, 5)).sample()

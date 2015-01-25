@@ -162,7 +162,7 @@ class App.Scenes.Stage.LambController extends App.NodeController
     shadow.setAnchorPoint 0.5, 0.5
     shadow.attr x: 250*@options.scale, y: 10*@options.scale, scale: 0
     @addChild shadow
-    @lamb_node.attr y: 1200
+    @lamb_node.attr y: 700
 
     @lamb_node.runAction cc.sequence cc.EaseBounceOut.create(cc.moveTo(1.4, cc.p(@lamb_node.getPosition().x, 0)), 0)
     @lamb_node.shadow.runAction cc.sequence cc.EaseBounceOut.create(cc.scaleTo(1.4, @options.scale), 0),
