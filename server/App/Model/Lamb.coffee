@@ -8,6 +8,7 @@ class Lamb extends Backbone.Model
       patience:      _(_.range(7,20)).sample()
       line:          _(_.range(0, 5)).sample()
       direction:     _(['left','right']).sample()
+      delay:         1*Math.random()
 
   set_owner: (user, index) ->
     @owner = user

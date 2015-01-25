@@ -9,7 +9,7 @@ class Application
       @users.add user
 
     setInterval =>
-      console.log "Online user: #{@users.models.length}"
+      console.log "Connected users: #{@users.models.length}"
     ,1000
 
 

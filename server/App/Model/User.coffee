@@ -3,6 +3,8 @@ class User extends Backbone.Model
     @app    = options.app
     @socket = options.socket
 
+    @socket.emit 'connected', user_id: @id
+
     @_bind_events @socket
 
   events:

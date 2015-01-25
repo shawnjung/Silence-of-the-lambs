@@ -66,3 +66,9 @@ class App.Scenes.ScoreStageScene extends App.Scenes.Stage.BaseScene
       @labels.score_label.update @current_score
       if @score_earned%5 is 0
         @render_lamb @_attributes_for_random_lamb()
+
+
+  _render_game_overlays: ->
+    @labels = new App.Scenes.Stage.ScoreModelLabelsNode
+    @labels.attr x: 0, y: 0, width: @size.width, height: @size.height
+    @addChild @labels, 700

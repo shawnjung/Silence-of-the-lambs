@@ -1,4 +1,4 @@
-class App.Scenes.Stage.LabelsNode extends cc.Node
+class App.Scenes.Stage.ScoreModelLabelsNode extends cc.Node
   onEnter: ->
     super
     @_render_current_score()

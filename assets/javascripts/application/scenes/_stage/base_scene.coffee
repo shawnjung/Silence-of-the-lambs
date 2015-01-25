@@ -7,6 +7,8 @@ class App.Scenes.Stage.BaseScene extends cc.Scene
   constructor: ->
     super
     @size = cc.winSize
+    @lines = [[],[],[],[],[],[]]
+    @lambs = []
     @touchables = []
 
 
@@ -43,11 +45,8 @@ class App.Scenes.Stage.BaseScene extends cc.Scene
     @elements.addChild @background, 0
 
   _render_lambs: ->
-    @lines = [[],[],[],[],[],[],[],[],[],[],[]]
-    @lambs = []
     _(_.range(0, @lambs_count)).each =>
-      @runAction cc.sequence new cc.DelayTime(1*Math.random()), new cc.CallFunc =>
-        @render_lamb @_attributes_for_random_lamb()
+      @render_lamb @_attributes_for_random_lamb()
 
   render_lamb: (options)->
     @lines[options.line].push 1
@@ -57,18 +56,14 @@ class App.Scenes.Stage.BaseScene extends cc.Scene
     lamb = new App.Scenes.Stage.LambController
       scale: 0.5-(y/@size.height*0.45), x: x, y: y
       patience: options.patience, direction: options.direction
-      speed_per_sec: options.speed_per_sec
+      speed_per_sec: options.speed_per_sec, opacity: 0
 
     @touchables.push lamb
     @lambs.push lamb
-    @elements.addChild lamb, 640+(y*-1)
-    lamb.dive => lamb.start()
 
-  _render_game_overlays: ->
-    @labels = new App.Scenes.Stage.LabelsNode
-    @labels.attr x: 0, y: 0, width: @size.width, height: @size.height
-    @addChild @labels, 700
-
+    @runAction cc.sequence new cc.DelayTime(options.delay), new cc.CallFunc =>
+      @elements.addChild lamb, 640+(y*-1)
+      lamb.dive => lamb.start()
 
 
 
@@ -106,3 +101,4 @@ class App.Scenes.Stage.BaseScene extends cc.Scene
     patience:  _(@patience_levels).sample()
     direction: _(['left', 'right']).sample()
     speed_per_sec: (300 - 200) + Math.random()*200
+    delay: 1*Math.random()

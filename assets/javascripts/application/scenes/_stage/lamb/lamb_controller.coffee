@@ -1,4 +1,4 @@
-class App.Scenes.Stage.LambController extends App.NodeController
+class App.Scenes.Stage.LambController extends cc.Node
   speed_per_sec: 180
   speaking: false
   walking:  false
@@ -6,7 +6,11 @@ class App.Scenes.Stage.LambController extends App.NodeController
   active:   true
   direction: 'right'
 
-  initialize: (options) ->
+  constructor: (options)->
+    super
+    @setAnchorPoint 0.5, 0
+    @options = options or {}
+
     @patience      = options.patience
     @speed_per_sec = options.speed_per_sec
 
@@ -22,6 +26,15 @@ class App.Scenes.Stage.LambController extends App.NodeController
 
   events:
     'touchstart': 'earn_score'
+
+
+  onEnter: ->
+    @_set_scale()
+    @_set_position()
+    @lamb_node.attr y: 700
+    @gauge_node.runAction cc.hide()
+    super
+
 
   start: ->
     @gauge_node.runAction cc.sequence cc.show()
@@ -158,7 +171,6 @@ class App.Scenes.Stage.LambController extends App.NodeController
 
   dive: (callback) ->
     @set_direction @options.direction
-    @gauge_node.runAction cc.hide()
     shadow = @lamb_node.shadow
     @lamb_node.removeChild shadow, false
     shadow.setAnchorPoint 0.5, 0.5
@@ -180,3 +192,37 @@ class App.Scenes.Stage.LambController extends App.NodeController
 
   _turn_to_right: -> new cc.CallFunc => @set_direction 'right'
   _turn_to_left:  -> new cc.CallFunc => @set_direction 'left'
+
+
+  _set_scale: ->
+    @speed_per_sec = @speed_per_sec*@options.scale
+    @lamb_node.setScale @options.scale
+    width  = parseInt @lamb_node.getContentSize().width*@options.scale
+    height = parseInt @lamb_node.getContentSize().height*@options.scale
+    @setContentSize width, height
+    @lamb_node.setPosition width/2, 0
+
+  _set_position: ->
+    size       = @getContentSize()
+    half_width = size.width / 2
+
+    @minimum = half_width
+    @maximum = @parent.size.width - half_width
+
+    @options.x = @maximum if @options.x > @maximum
+    @options.x = @minimum if @options.x < @minimum
+
+    @setPosition @options.x, @options.y
+
+
+  onTouchBegan: ->
+    if @[@events.touchstart] instanceof Function
+      @[@events.touchstart].apply this, arguments
+    else
+      true
+
+  onTouchMoved: ->
+    @[@events.touchmove].apply this, arguments if @[@events.touchmove] instanceof Function
+
+  onTouchEnded: ->
+    @[@events.touchend].apply this, arguments if @[@events.touchend] instanceof Function
