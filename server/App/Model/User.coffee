@@ -79,6 +79,7 @@ class User extends Backbone.Model
     _(@events).each (method_name, event_name) =>
       if @[method_name]
         method = _.bind @[method_name], this
-        socket.on event_name, (params) => method socket, params
+        socket.on event_name, (params) =>
+          try method socket, params
 
 module.exports = User

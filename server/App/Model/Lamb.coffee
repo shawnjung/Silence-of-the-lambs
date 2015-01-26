@@ -35,7 +35,7 @@ class Lamb extends Backbone.Model
     , @get('patience')*1000
 
   expire: ->
-    @collection.room.end_pvp loser: @owner, lamb: this
+    try @collection.room.end_pvp loser: @owner, lamb: this
 
 
 module.exports = Lamb
