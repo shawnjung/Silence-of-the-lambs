@@ -1,60 +1,71 @@
 class Room extends Backbone.Model
-  active: true
+  active: false
   initialize: ->
-    @players = []
+    @players = new App.Collection.Users [], model: App.Model.User
     @lambs   = new App.Collection.Lambs [], model: App.Model.Lamb
     @lambs.room = this
 
-  set_player: (player, options)->
-    @players[options.as] = player
 
   init_data: ->
-    @active = true
     @lambs.reset()
-    _(@players).each (player, index) =>
+    @players.each (player) =>
       _(3).times =>
         lamb = @lambs.add id: uuid.v4()
         lamb.set_owner player
 
 
+  set_player: (player)->
+    @players.add player
+    player.room = this
+
+
+  unset_player: (user) ->
+    @players.remove user
+    @destroy() if @players.length is 0
+    user.room = undefined
+
+
   add_lamb: (options) ->
-    _(@players).each (player) =>
+    @players.each (player) =>
       if player isnt options.by
         lamb = @lambs.add id: uuid.v4()
         lamb.set_owner player
         @emit_each 'add-lamb', lamb.toJSON()
 
+
   as_json: ->
     lambs: @lambs.toJSON()
 
-  is_full: -> @players[0] && @players[1]
 
-  left_user: (user) ->
-    console.log @players
-    user_index = _(@players).indexOf user
-    @players[user_index] = null
+  is_full: -> @players.length is 2
+
 
   start_pvp: ->
     @active = true
     @init_data()
-    _(@players).each (player) => player.room = this
     @emit_each 'pvp-started', @as_json()
     @lambs.each (lamb) -> lamb.start_counter with_delay: true
 
+
   end_pvp: (options) ->
+    lamb_id = if options.lamb then options.lamb.id else null
     if @active
       @active = false
-      _(@players).each (player) =>
+      @players.each (player) =>
         if player is options.loser
-          player.socket.emit 'pvp-lost', lamb_id: options.lamb.id
+          player.socket.emit 'pvp-lost', lamb_id: lamb_id
         else
-          player.socket.emit 'pvp-won', lamb_id: options.lamb.id
-
+          player.socket.emit 'pvp-won', lamb_id: lamb_id
+      @lambs.each (lamb) -> lamb.clear_counter()
 
 
   emit_each: (command, params) ->
-    _(@players).each (player) ->
+    @players.each (player) ->
       player.socket.emit command, params
+
+
+  destroy: ->
+    try @collection.remove this
 
 
 module.exports = Room

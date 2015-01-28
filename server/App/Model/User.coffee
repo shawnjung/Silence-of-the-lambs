@@ -8,25 +8,21 @@ class User extends Backbone.Model
     @_bind_events @socket
 
   events:
-    'ping': 'pong'
     'create-room': 'create_room'
     'join-room': 'join_room'
     'touch-lamb': 'update_lamb'
-    'left-room': 'left_room'
+    'leave-room': 'leave_room'
     'restart-pvp': 'restart_pvp'
 
     'disconnect': 'disconnect'
 
 
-
-  pong: ->
-    @socket.emit 'pong'
-
-
   create_room: ->
+    @leave_room() if @room
+
     room = @app.rooms.add id: @app.rooms.create_id()
     room.init_data()
-    room.set_player this, as: 0
+    room.set_player this
 
     @socket.emit 'room-created', room_id: room.id
 
@@ -36,13 +32,14 @@ class User extends Backbone.Model
     if not room or room.is_full()
       @socket.emit 'invalid-room'
     else
-      room.set_player this, as: 1
+      @room.unset_player this if @room
+      room.set_player this
       room.start_pvp()
 
 
-  left_room: ->
-    @room.end_pvp loser: this, lamb: @room.lambs.first()
-    @room.left_user this
+  leave_room: ->
+    @room.end_pvp loser: this if @room.active
+    @room.unset_player this
 
 
   restart_pvp: ->
@@ -51,8 +48,9 @@ class User extends Backbone.Model
     else
       @socket.emit 'left-player'
 
+
   update_lamb: (socket, params) ->
-    # @room is defined when the room starts pvp
+    # @room is defined when room set player
     if lamb = @room.lambs.get params.id
       if lamb.is_owner this
         start_time = lamb.start_time
@@ -69,17 +67,22 @@ class User extends Backbone.Model
       else
         @room.end_pvp loser: this, lamb: lamb
 
+
   disconnect: ->
-    @left_room() if @room
+    @leave_room() if @room
+    @destroy()
+
+
+  destroy: ->
     @collection.remove this
 
 
 
   _bind_events: (socket)->
     _(@events).each (method_name, event_name) =>
-      if @[method_name]
-        method = _.bind @[method_name], this
-        socket.on event_name, (params) =>
-          try method socket, params
+      socket.on event_name, (params) =>
+        @trigger event_name, socket,  params
+
+      @on event_name, @[method_name], this
 
 module.exports = User

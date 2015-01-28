@@ -3,6 +3,7 @@ class Lamb extends Backbone.Model
   initialize: (attributes, options)->
     @init_attributes()
 
+
   init_attributes: ->
     @set
       x:             Math.random()
@@ -12,12 +13,15 @@ class Lamb extends Backbone.Model
       direction:     _(['left','right']).sample()
       delay:         Math.random()
 
+
   set_owner: (user) ->
     @owner = user
     @set owner_id: user.id
 
+
   is_owner: (user) ->
     @owner is user
+
 
   start_counter: (options) ->
     delay = @dive_delay
@@ -27,6 +31,7 @@ class Lamb extends Backbone.Model
       @renew_counter()
     , delay*1000
 
+
   renew_counter: ->
     clearTimeout @_timer if @_timer
     @start_time = new Date().getTime()
@@ -34,8 +39,13 @@ class Lamb extends Backbone.Model
       @expire()
     , @get('patience')*1000
 
+
+  clear_counter: ->
+    clearTimeout @_timer
+
+
   expire: ->
-    try @collection.room.end_pvp loser: @owner, lamb: this
+    @collection.room.end_pvp loser: @owner, lamb: this
 
 
 module.exports = Lamb

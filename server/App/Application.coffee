@@ -9,10 +9,8 @@ class Application
       @users.add user
 
     setInterval =>
-      console.log "Connected users: #{@users.models.length}"
+      console.log "Connected users: #{@users.length}, Rooms: #{@rooms.length}"
     ,1000
-
-
 
 
 module.exports = Application
