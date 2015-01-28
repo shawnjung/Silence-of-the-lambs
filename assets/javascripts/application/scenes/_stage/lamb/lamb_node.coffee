@@ -12,7 +12,9 @@ class App.Scenes.Stage.LambNode extends cc.Node
 
 
   stop: ->
-    _(@legs).each (leg) -> leg.stopAllActions()
+    _(@legs).each (leg) ->
+      leg.stopAllActions()
+      leg.runAction cc.sequence cc.rotateTo(0.6, 90)
 
 
   _create_sprite: (x1, y1, x2, y2) ->

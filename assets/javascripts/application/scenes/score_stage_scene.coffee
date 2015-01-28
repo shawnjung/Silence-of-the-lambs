@@ -55,11 +55,11 @@ class App.Scenes.ScoreStageScene extends App.Scenes.Stage.BaseScene
     @score_earned = 0
 
     @on 'time-over', (lamb) =>
-      cc.audioEngine.stopMusic()
       @stop_all_lambs()
       @zoom_lamb lamb, =>
-        @labels.active_restart_button()
+        @labels.activate_restart_button()
         lamb.speak()
+        lamb.show_gauge()
 
     @on 'score-earned', (score) =>
       @score_earned++

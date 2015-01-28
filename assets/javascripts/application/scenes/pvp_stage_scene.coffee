@@ -12,6 +12,8 @@ class App.Scenes.PVPStageScene extends App.Scenes.Stage.BaseScene
 
     @_startEventListener()
 
+    window.current_stage = this
+
 
   add_lamb: (data) ->
     data.skin = 'enermy' if data.owner_id isnt $socket._pvp_id
@@ -32,15 +34,25 @@ class App.Scenes.PVPStageScene extends App.Scenes.Stage.BaseScene
   _set_events: ->
     @on 'pvp-won', (lamb) =>
       @stop_all_lambs()
-      @zoom_lamb lamb, =>
-        lamb.speak()
-        @labels.active_pvp_won()
+      if lamb
+        @zoom_lamb lamb, =>
+          lamb.speak()
+          lamb.show_gauge()
+          @labels.activate_pvp_won()
+
+      else
+        @labels.activate_pvp_won()
 
     @on 'pvp-lost', (lamb) =>
       @stop_all_lambs()
-      @zoom_lamb lamb, =>
-        lamb.speak()
-        @labels.active_pvp_lost()
+      if lamb
+        @zoom_lamb lamb, =>
+          lamb.speak()
+          lamb.show_gauge()
+          @labels.activate_pvp_lost()
+
+      else
+        @labels.activate_pvp_lost()
 
 
   get_lamb: (id) -> @_lambs_by_id[id]

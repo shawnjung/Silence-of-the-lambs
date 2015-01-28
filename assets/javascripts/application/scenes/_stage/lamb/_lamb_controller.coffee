@@ -36,21 +36,30 @@ class App.Scenes.Stage.LambController extends cc.Node
     @_set_scale()
     @_set_position()
     @lamb_node.attr y: 700
-    @gauge_node.runAction cc.hide()
+    @hide_gauge()
     super
 
 
   start: ->
-    @gauge_node.runAction cc.sequence cc.show()
-    @gauge_node.start()
-    @move_around 0, @stage.size.width
-    @_start_time = new Date().getTime()
+    if @active
+      @gauge_node.runAction cc.sequence cc.show()
+      @gauge_node.start()
+      @move_around 0, @stage.size.width
+      @_start_time = new Date().getTime()
 
   stop: ->
     @active = false
+    @moving = false
+    @walking = false
     @stopAllActions()
     @lamb_node.stop()
     @gauge_node.stop()
+    @hide_gauge()
+
+  show_gauge: ->
+    @gauge_node.runAction cc.show()
+
+  hide_gauge: ->
     @gauge_node.runAction cc.hide()
 
   reset: (options) ->
@@ -128,14 +137,6 @@ class App.Scenes.Stage.LambController extends cc.Node
       @lamb_node.legs[1].runAction right_animation.clone()
       @lamb_node.legs[2].runAction left_animation.clone()
       @lamb_node.legs[3].runAction right_animation.clone()
-
-
-  stand: ->
-    @moving = false
-    @walking = false
-    _(@lamb_node.legs).each (leg) =>
-      leg.stopAllActions()
-      leg.runAction cc.sequence cc.rotateTo(0.6, 90)
 
 
   speak: ->

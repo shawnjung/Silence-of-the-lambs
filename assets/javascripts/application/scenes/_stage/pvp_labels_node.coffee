@@ -7,13 +7,13 @@ class App.Scenes.Stage.PVPLabelsNode extends cc.Node
     @_render_restart_button()
 
 
-  active_pvp_won: ->
+  activate_pvp_won: ->
     @won_image.runAction cc.sequence new cc.DelayTime(0.5), cc.fadeIn(0.4)
-    @active_restart_button()
+    @activate_restart_button()
 
-  active_pvp_lost: ->
+  activate_pvp_lost: ->
     @lost_image.runAction cc.sequence new cc.DelayTime(0.5), cc.fadeIn(0.4)
-    @active_restart_button()
+    @activate_restart_button()
 
 
   _render_won_image: ->
@@ -29,7 +29,7 @@ class App.Scenes.Stage.PVPLabelsNode extends cc.Node
     @addChild @lost_image
 
 
-  active_restart_button: ->
+  activate_restart_button: ->
     @restart_button.runAction cc.sequence new cc.DelayTime(0.5), cc.fadeIn(0.4), new cc.CallFunc =>
       @parent.touchables = [@restart_button, @back_button]
 
@@ -43,7 +43,7 @@ class App.Scenes.Stage.PVPLabelsNode extends cc.Node
     @parent.touchables.push @back_button
 
     @back_button.onTouchBegan = =>
-      $socket.emit 'left-room'
+      $socket.emit 'leave-room'
       cc.director.runScene cc.TransitionFade.create 1, new App.Scenes.LandingScene, new cc.Color(0,0,0);
       false
 

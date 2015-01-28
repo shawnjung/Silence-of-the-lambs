@@ -20,7 +20,7 @@ class App.Scenes.LandingScene extends cc.Scene
     @lamb_face.runAction cc.sequence cc.fadeIn @ani_speed(1.6), 3
 
   _render_title: ->
-    @title = @_create_sprite 0, 0, 416, 20
+    @title = @_create_sprite 0, 0, 414, 20
     @title.attr x: @size.width/2, y: 200, opacity: 0, scale: 1.2
     @title.setAnchorPoint 0.5, 0
     @addChild @title
@@ -51,7 +51,7 @@ class App.Scenes.LandingScene extends cc.Scene
 
 
   _render_copyright: ->
-    @copyright = @_create_sprite 2, 39, 300, 14
+    @copyright = @_create_sprite 2, 38, 300, 16
     @copyright.attr x: @size.width/2-150, y: 20, opacity: 0
     @addChild @copyright
     @copyright.runAction cc.sequence new cc.DelayTime(@ani_speed(3.8)), cc.spawn(cc.fadeIn(@ani_speed(1.0), 3))
