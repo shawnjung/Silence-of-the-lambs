@@ -1,16 +1,15 @@
-class App.Scenes.LandingScene extends cc.Scene
+class App.Scenes.LandingScene extends App.Scene
   animation_speed: 1
   onEnter: ->
     super
     @size = cc.winSize
-    @touchables = []
+
     @_render_lamb_face()
     @_render_title()
     @_render_menus()
     @_render_copyright()
     @_render_common_cc()
 
-    @_startEventListener()
 
 
   _render_lamb_face: ->
@@ -67,34 +66,6 @@ class App.Scenes.LandingScene extends cc.Scene
     output = new cc.Sprite res.landing.sprite, new cc.Rect(x1,y1,x2,y2);
     output.setAnchorPoint 0, 0
     output
-
-  _startEventListener: ->
-    @touchListener = cc.EventListener.create
-      event: cc.EventListener.TOUCH_ONE_BY_ONE
-      onTouchBegan: (touch, event) =>
-        touched_nodes = []
-        _(@touchables).each (node) ->
-          locationInNode = node.convertToNodeSpace(touch.getLocation())
-          size = node.getContentSize()
-          rect = cc.rect(0, 0, size.width, size.height)
-          touched_nodes.push node if cc.rectContainsPoint(rect, locationInNode)
-
-        if touched_nodes.length
-          touch.touched_node = _(touched_nodes).min (node) -> node.getPosition().y
-        touch.touched_node.onTouchBegan.apply touch.touched_node, arguments if touch.touched_node
-
-
-      onTouchMoved: (touch) =>
-        if touch.touched_node
-          touch.touched_node.onTouchMoved.apply touch.touched_node, arguments
-
-      onTouchEnded: (touch) =>
-        if touch.touched_node
-          touch.touched_node.onTouchEnded.apply touch.touched_node, arguments
-
-
-    cc.eventManager.addListener @touchListener, this
-
 
 
   ani_speed: (second) -> second * @animation_speed

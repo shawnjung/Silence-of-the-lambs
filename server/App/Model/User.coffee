@@ -18,7 +18,7 @@ class User extends Backbone.Model
 
 
   create_room: ->
-    @leave_room() if @room
+    @leave_room()
 
     room = @app.rooms.add id: @app.rooms.create_id()
     room.init_data()
@@ -38,8 +38,9 @@ class User extends Backbone.Model
 
 
   leave_room: ->
-    @room.end_pvp loser: this if @room.active
-    @room.unset_player this
+    if @room
+      @room.end_pvp loser: this if @room.active
+      @room.unset_player this
 
 
   restart_pvp: ->
@@ -69,12 +70,18 @@ class User extends Backbone.Model
 
 
   disconnect: ->
-    @leave_room() if @room
+    @leave_room()
     @destroy()
 
 
   destroy: ->
     @collection.remove this
+
+  increase_pvp_score: ->
+    @set 'pvp_score', @get('pvp_score') + 1
+
+  reset_pvp_score: ->
+    @set 'pvp_score', 0
 
 
 

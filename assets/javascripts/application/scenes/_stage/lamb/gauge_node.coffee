@@ -1,6 +1,7 @@
 class App.Scenes.Stage.GaugeNode extends cc.Node
   constructor: (options) ->
     super
+    @skin = options.skin or res.stage.lamb
     @setAnchorPoint 0.5, 0
     @setContentSize 200, 18
     @setPosition 50, 0
@@ -35,7 +36,7 @@ class App.Scenes.Stage.GaugeNode extends cc.Node
 
 
   _create_sprite: (x1, y1, x2, y2) ->
-    output = new cc.Sprite res.stage.lamb, new cc.Rect(x1,y1,x2,y2);
+    output = new cc.Sprite @skin, new cc.Rect(x1,y1,x2,y2);
     output.setAnchorPoint 0, 0
     output
 

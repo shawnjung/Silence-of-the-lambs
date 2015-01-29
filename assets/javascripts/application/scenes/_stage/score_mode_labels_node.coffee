@@ -33,7 +33,9 @@ class App.Scenes.Stage.ScoreModelLabelsNode extends cc.Node
   activate_restart_button: ->
     @lost_image.runAction cc.sequence new cc.DelayTime(0.5), cc.fadeIn(0.4)
     @restart_button.runAction cc.sequence new cc.DelayTime(0.5), cc.fadeIn(0.4), new cc.CallFunc =>
-      @parent.touchables = [@restart_button, @back_button]
+      @parent.touchables.length = 0
+      @parent.touchables.push @restart_button
+      @parent.touchables.push @back_button
 
 
 

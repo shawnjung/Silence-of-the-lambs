@@ -21,10 +21,10 @@ $socket.on 'add-lamb', (response) =>
 
 $socket.on 'pvp-won', (response) =>
   lamb_controller = $socket._pvp_stage_scene.get_lamb response.lamb_id
-  $socket._pvp_stage_scene.trigger 'pvp-won', lamb_controller
+  $socket._pvp_stage_scene.trigger 'pvp-won', lamb_controller, response
 
 $socket.on 'pvp-lost', (response) =>
   lamb_controller = $socket._pvp_stage_scene.get_lamb response.lamb_id
-  $socket._pvp_stage_scene.trigger 'pvp-lost', lamb_controller
+  $socket._pvp_stage_scene.trigger 'pvp-lost', lamb_controller, response
 
 window.$socket = $socket

@@ -41,6 +41,7 @@ class Lamb extends Backbone.Model
 
 
   clear_counter: ->
+    clearTimeout @_initiation
     clearTimeout @_timer
 
 

@@ -10,8 +10,6 @@ class App.Scenes.PVPStageScene extends App.Scenes.Stage.BaseScene
     @_render_lambs()
     @_set_events()
 
-    @_startEventListener()
-
     window.current_stage = this
 
 
@@ -35,8 +33,8 @@ class App.Scenes.PVPStageScene extends App.Scenes.Stage.BaseScene
     @on 'pvp-won', (lamb) =>
       @stop_all_lambs()
       if lamb
+        lamb.speak()
         @zoom_lamb lamb, =>
-          lamb.speak()
           lamb.show_gauge()
           @labels.activate_pvp_won()
 
@@ -46,8 +44,8 @@ class App.Scenes.PVPStageScene extends App.Scenes.Stage.BaseScene
     @on 'pvp-lost', (lamb) =>
       @stop_all_lambs()
       if lamb
+        lamb.speak()
         @zoom_lamb lamb, =>
-          lamb.speak()
           lamb.show_gauge()
           @labels.activate_pvp_lost()
 

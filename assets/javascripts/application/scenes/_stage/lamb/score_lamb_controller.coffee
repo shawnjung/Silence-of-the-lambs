@@ -3,7 +3,6 @@ class App.Scenes.Stage.ScoreLambController extends App.Scenes.Stage.LambControll
     'touchstart': 'earn_score'
 
   earn_score:  ->
-    cc.audioEngine.playEffect(res.audio.tap, false)
     if @active
       end_time   = new Date().getTime()
       spent_time = parseInt((end_time - @_start_time)/1000*100)/100
@@ -20,4 +19,6 @@ class App.Scenes.Stage.ScoreLambController extends App.Scenes.Stage.LambControll
       if rest_time < spent_time
         @stage.trigger 'score-earned', parseInt score
         @_render_score_overlay parseInt score
+      else
+        @_render_score_overlay 0
       @reset patience: _(@stage.patience_levels).sample()

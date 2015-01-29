@@ -1,7 +1,6 @@
-class App.Scenes.PVPLandingScene extends cc.Scene
+class App.Scenes.PVPLandingScene extends App.Scene
   constructor: (options) ->
     super
-    @touchables = []
     @size = cc.winSize
     @options = options
     @_render_background()
@@ -10,7 +9,6 @@ class App.Scenes.PVPLandingScene extends cc.Scene
     @_render_room_id()
     @_render_back_button()
 
-    @_startEventListener()
 
 
 
@@ -36,12 +34,11 @@ class App.Scenes.PVPLandingScene extends cc.Scene
 
     @button.onTouchBegan = =>
       room_id = prompt 'Please provide 5 digits number:'
+      console.log room_id
       if room_id is @options.room_id
         alert "That's your room number."
       else if room_id
         $socket.emit 'join-room', room_id: room_id
-      else
-        alert 'Please put a room number.'
       false
 
   _render_room_id: ->

@@ -1,4 +1,4 @@
-class App.Scenes.Stage.BaseScene extends cc.Scene
+class App.Scenes.Stage.BaseScene extends App.Scene
   lambs_count: 5
   patience_levels: _.range(7,20)
   current_score: 0
@@ -9,7 +9,6 @@ class App.Scenes.Stage.BaseScene extends cc.Scene
     @size = cc.winSize
     @lines = [[],[],[],[],[],[]]
     @lambs = []
-    @touchables = []
 
 
   zoom_lamb: (lamb, callback) ->
@@ -67,36 +66,6 @@ class App.Scenes.Stage.BaseScene extends cc.Scene
       lamb.dive => lamb.start()
 
     lamb
-
-
-
-  _startEventListener: ->
-    @touchListener = cc.EventListener.create
-      event: cc.EventListener.TOUCH_ONE_BY_ONE
-      onTouchBegan: (touch, event) =>
-        touched_nodes = []
-        _(@touchables).each (node) ->
-          locationInNode = node.convertToNodeSpace(touch.getLocation())
-          size = node.getContentSize()
-          rect = cc.rect(0, 0, size.width, size.height)
-          touched_nodes.push node if cc.rectContainsPoint(rect, locationInNode)
-
-        if touched_nodes.length
-          touch.touched_node = _(touched_nodes).min (node) -> node.getPosition().y
-        touch.touched_node.onTouchBegan.apply touch.touched_node, arguments if touch.touched_node
-
-
-      onTouchMoved: (touch) =>
-        if touch.touched_node
-          touch.touched_node.onTouchMoved.apply touch.touched_node, arguments
-
-      onTouchEnded: (touch) =>
-        if touch.touched_node
-          touch.touched_node.onTouchEnded.apply touch.touched_node, arguments
-
-
-    cc.eventManager.addListener @touchListener, this
-
 
 
   _attributes_for_random_lamb: ->

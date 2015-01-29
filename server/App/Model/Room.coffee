@@ -4,6 +4,7 @@ class Room extends Backbone.Model
     @players = new App.Collection.Users [], model: App.Model.User
     @lambs   = new App.Collection.Lambs [], model: App.Model.Lamb
     @lambs.room = this
+    @scores  = [0, 0]
 
 
   init_data: ->
@@ -16,6 +17,7 @@ class Room extends Backbone.Model
 
   set_player: (player)->
     @players.add player
+    player.reset_pvp_score()
     player.room = this
 
 
@@ -34,7 +36,8 @@ class Room extends Backbone.Model
 
 
   as_json: ->
-    lambs: @lambs.toJSON()
+    lambs:   @lambs.toJSON()
+    players: @players.toJSON()
 
 
   is_full: -> @players.length is 2
@@ -51,11 +54,18 @@ class Room extends Backbone.Model
     lamb_id = if options.lamb then options.lamb.id else null
     if @active
       @active = false
-      @players.each (player) =>
+      winner  = null
+      loser   = null
+
+      @players.each (player, index) =>
         if player is options.loser
-          player.socket.emit 'pvp-lost', lamb_id: lamb_id
+          loser  = player
         else
-          player.socket.emit 'pvp-won', lamb_id: lamb_id
+          winner = player
+
+      winner.increase_pvp_score()
+      winner.socket.emit 'pvp-won', lamb_id: lamb_id
+      loser.socket.emit 'pvp-lost', lamb_id: lamb_id
       @lambs.each (lamb) -> lamb.clear_counter()
 
 

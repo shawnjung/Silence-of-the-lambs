@@ -10,8 +10,6 @@ class App.Scenes.ScoreStageScene extends App.Scenes.Stage.BaseScene
     @_start_tutorial =>
       @_start_score_mode()
 
-    @_startEventListener()
-
 
 
   _start_tutorial: (callback) ->
@@ -55,10 +53,10 @@ class App.Scenes.ScoreStageScene extends App.Scenes.Stage.BaseScene
     @score_earned = 0
 
     @on 'time-over', (lamb) =>
+      lamb.speak()
       @stop_all_lambs()
       @zoom_lamb lamb, =>
         @labels.activate_restart_button()
-        lamb.speak()
         lamb.show_gauge()
 
     @on 'score-earned', (score) =>

@@ -20,7 +20,7 @@ class App.Scenes.Stage.LambController extends cc.Node
     @speed_per_sec = options.speed_per_sec
 
     @lamb_node = new App.Scenes.Stage.LambNode skin: @skins[@skin]
-    @gauge_node = new App.Scenes.Stage.GaugeNode
+    @gauge_node = new App.Scenes.Stage.GaugeNode skin: @skins[@skin]
 
     @addChild @lamb_node, 1
     @addChild @gauge_node, 2
@@ -142,11 +142,11 @@ class App.Scenes.Stage.LambController extends cc.Node
   speak: ->
     unless @speaking
       @speaking = true
-      @lamb_node.face.setTextureRect new cc.Rect 891, 200, 99, 74
       effect = cc.audioEngine.playEffect(res.audio.baaa, false)
       setTimeout =>
         cc.audioEngine.stopEffect effect
       , 3000
+      @lamb_node.face.setTextureRect new cc.Rect 891, 200, 99, 74
 
 
   die: (callback) ->
