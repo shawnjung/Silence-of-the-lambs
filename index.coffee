@@ -29,4 +29,4 @@ socket_app = new SocketApp.Application io: new SocketIO(http_server)
 app.use '/', static_server
 app.use '/assets', assets_server
 
-http_server.listen 3000
+http_server.listen process.env.PORT or 3000
