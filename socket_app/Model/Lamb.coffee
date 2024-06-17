@@ -46,7 +46,7 @@ class Lamb extends Backbone.Model
 
 
   expire: ->
-    @collection.room.end_pvp loser: @owner, lamb: this
+    @collection?.room.end_pvp loser: @owner, lamb: this
 
 
 module.exports = Lamb

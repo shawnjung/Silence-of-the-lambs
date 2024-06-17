@@ -1,5 +1,5 @@
 steps:
 - name: 'gcr.io/cloud-builders/docker'
-  args: [ 'build', '-t', 'gcr.io/shawn-jung/sotl', '.' ]
+  args: [ 'build', '-t', 'gcr.io/shawnjung/sotl', '.' ]
 images:
-- 'gcr.io/shawn-jung/sotl'
+- 'gcr.io/shawnjung/sotl'
