@@ -1,0 +1,100 @@
+/*
+ * The inline feed surface. Deliberately tiny: no Phaser, no audio, no atlas.
+ * Everything heavy lives behind the Play button in game.html.
+ */
+* {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  margin: 0;
+  height: 100%;
+}
+
+.app {
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 12px;
+  font-family:
+    ui-sans-serif,
+    system-ui,
+    -apple-system,
+    'Segoe UI',
+    sans-serif;
+  color: #f6fff0;
+  background:
+    radial-gradient(120% 90% at 50% 0%, #4e8f2e 0%, #2c5c1c 55%, #16330f 100%);
+}
+
+.card {
+  width: 100%;
+  max-width: 420px;
+  text-align: center;
+}
+
+.title {
+  margin: 0;
+  font-size: clamp(20px, 6vw, 30px);
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  text-shadow: 0 2px 0 rgba(0, 0, 0, 0.25);
+}
+
+.tagline {
+  margin: 6px 0 14px;
+  font-size: clamp(12px, 3.4vw, 15px);
+  opacity: 0.85;
+}
+
+.play {
+  appearance: none;
+  border: 0;
+  cursor: pointer;
+  padding: 12px 34px;
+  border-radius: 999px;
+  font-size: 17px;
+  font-weight: 700;
+  color: #1d3d12;
+  background: #ffe66d;
+  box-shadow: 0 4px 0 #c9ac2f;
+  transition:
+    transform 0.06s ease,
+    box-shadow 0.06s ease;
+}
+
+.play:active {
+  transform: translateY(3px);
+  box-shadow: 0 1px 0 #c9ac2f;
+}
+
+.board {
+  list-style: none;
+  margin: 14px 0 0;
+  padding: 0;
+  display: grid;
+  gap: 3px;
+  font-size: 13px;
+}
+
+.board li {
+  display: flex;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 4px 12px;
+  border-radius: 6px;
+  background: rgba(0, 0, 0, 0.18);
+}
+
+.board .who {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.board .score {
+  font-variant-numeric: tabular-nums;
+  font-weight: 700;
+}
