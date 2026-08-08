@@ -1,0 +1,26 @@
+{
+  "frames": {
+    "title": {
+      "frame": { "x": 0, "y": 0, "w": 532, "h": 48 },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": { "x": 0, "y": 0, "w": 532, "h": 48 },
+      "sourceSize": { "w": 532, "h": 48 }
+    },
+    "btn/start": {
+      "frame": { "x": 2, "y": 51, "w": 396, "h": 88 },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": { "x": 0, "y": 0, "w": 396, "h": 88 },
+      "sourceSize": { "w": 396, "h": 88 }
+    }
+  },
+  "meta": {
+    "app": "https://github.com/shawnjung/Silence-of-the-lambs",
+    "version": "1.0",
+    "image": "pvp-landing.png",
+    "format": "RGBA8888",
+    "size": { "w": 543, "h": 175 },
+    "scale": "1"
+  }
+}
