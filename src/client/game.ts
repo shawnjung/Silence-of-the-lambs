@@ -5,6 +5,8 @@ import { Boot } from './scenes/Boot';
 import { Preloader } from './scenes/Preloader';
 import { MainMenu } from './scenes/MainMenu';
 import { ScoreStage } from './scenes/ScoreStage';
+import { PvpLanding } from './scenes/PvpLanding';
+import { PvpStage } from './scenes/PvpStage';
 import { Hud } from './scenes/Hud';
 
 const config: Phaser.Types.Core.GameConfig = {
@@ -18,7 +20,7 @@ const config: Phaser.Types.Core.GameConfig = {
     width: WORLD_WIDTH,
     height: WORLD_HEIGHT,
   },
-  scene: [Boot, Preloader, MainMenu, ScoreStage, Hud],
+  scene: [Boot, Preloader, MainMenu, ScoreStage, PvpLanding, PvpStage, Hud],
 };
 
 document.addEventListener('DOMContentLoaded', () => {

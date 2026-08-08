@@ -472,9 +472,46 @@ export async function ping(
 }
 
 /** `User.coffee#leave_room` — an explicit departure, same ending path as a lapsed heartbeat. */
-export async function leave(matchId: string, userId: string): Promise<PvpLeaveResponse> {
+/**
+ * Vacates the matchmaking queue, but only if this user is still the one
+ * parked in it. Watching the key matters: between our read and our delete
+ * someone else may have claimed our slot and parked themselves, and blindly
+ * deleting would evict them.
+ */
+async function leaveQueue(postId: string, userId: string): Promise<void> {
+  const qKey = keys.pvpQueue(postId);
+  const tx = await redis.watch(qKey);
+  const waiting = await redis.get(qKey);
+
+  if (waiting !== userId) return;
+
+  await tx.multi();
+  await tx.del(qKey);
+  await committed(tx);
+}
+
+/**
+ * Explicit departure. `matchId` is absent when the caller was still waiting
+ * in the queue rather than in a match — without this path their queue entry
+ * would linger for its full TTL and the next joiner would be paired with
+ * someone who already walked away, then sit in a match until the heartbeat
+ * timed the ghost out.
+ */
+export async function leave(
+  postId: string,
+  userId: string,
+  matchId?: string
+): Promise<PvpLeaveResponse> {
+  if (!matchId) {
+    await leaveQueue(postId, userId);
+    return { status: 'ok' };
+  }
+
   const state = await loadMatch(matchId);
-  if (!state) return { status: 'ok' };
+  if (!state) {
+    await leaveQueue(postId, userId);
+    return { status: 'ok' };
+  }
   const { meta } = state;
   if (!meta.players.includes(userId)) {
     throw new PvpError(403, 'not a participant in this match');

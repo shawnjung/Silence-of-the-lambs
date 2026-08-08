@@ -94,7 +94,12 @@ export type PvpPingResponse = { status: 'ok' } | ({ status: 'over' } & PvpOverPa
 
 // ---- REST: POST /api/pvp/leave ----
 
-export type PvpLeaveRequest = { matchId: string };
+/**
+ * `matchId` is optional: a player who is still parked in the matchmaking
+ * queue has no match to leave, but still needs to vacate the queue so the
+ * next joiner is not paired with someone who has already walked away.
+ */
+export type PvpLeaveRequest = { matchId?: string };
 
 export type PvpLeaveResponse = { status: 'ok' };
 

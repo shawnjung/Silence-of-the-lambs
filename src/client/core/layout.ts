@@ -145,3 +145,18 @@ export function applyPlayCamera(scene: Scene, layout: Layout): void {
     (WORLD_HEIGHT - band.height) / 2
   );
 }
+
+/**
+ * `computeLayout` + `applyPlayCamera` for the scene's current canvas size,
+ * returning the resulting `Layout#zoom` (or 1 if the band is degenerate) --
+ * the "base" zoom callers need to remember so a temporary zoom (see
+ * `stage/cameraZoom.ts`'s `zoomOnLoss`) has something to multiply against
+ * and `applyBaseCameraToScene` has something to restore back to on the next
+ * resize or scene entry. Shared by `ScoreStage` and `PvpStage`, which are
+ * otherwise identical on this one point.
+ */
+export function applyBaseCameraToScene(scene: Scene): number {
+  const layout = computeLayout(scene.scale.width, scene.scale.height);
+  applyPlayCamera(scene, layout);
+  return layout.zoom > 0 ? layout.zoom : 1;
+}

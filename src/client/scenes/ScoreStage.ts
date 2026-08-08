@@ -10,9 +10,10 @@ import {
 } from '../core/assets';
 import { applyMuteState, isMuted, startMusicOnce, toggleMuted } from '../core/audio';
 import { api } from '../core/api';
-import { applyPlayCamera, computeLayout, type Layout } from '../core/layout';
+import { applyBaseCameraToScene } from '../core/layout';
 import { Lamb, type LambStage } from '../objects/Lamb';
-import { GAUGE_WIDTH, LAMB_BODY_WIDTH, flipY, localBodyPosition } from '../objects/lambMath';
+import { GAUGE_WIDTH, flipY, localBodyPosition } from '../objects/lambMath';
+import { zoomOnLoss } from '../stage/cameraZoom';
 import { Finger } from '../stage/Finger';
 import {
   LAMBS_COUNT,
@@ -25,6 +26,7 @@ import {
 } from '../stage/lambSpawn';
 import { showScorePopup } from '../stage/ScorePopup';
 import { earnScore } from '../stage/scoring';
+import { isWithinPlayViewport, renderTapCircle } from '../stage/tapFeedback';
 import { Hud } from './Hud';
 
 export type ScoreStageInitData = { hadTutorial?: boolean };
@@ -43,17 +45,9 @@ const OVERLAY_DEPTH = 700;
 const SCORE_POPUP_DEPTH = 650;
 const TAP_CIRCLE_DEPTH = 1000;
 
-// -- Tap circle (event_listener.coffee#_render_touch_circle) ---------------
-const TAP_CIRCLE_START_SCALE = 0.4;
-const TAP_CIRCLE_PHASE_MS = 100;
-
 // -- Restart/lost overlay fade-in (score_mode_labels_node.coffee#activate_restart_button) --
 const OVERLAY_FADE_DELAY_MS = 500;
 const OVERLAY_FADE_DURATION_MS = 400;
-
-// -- Camera zoom-on-loss (see zoomLamb() below) -----------------------------
-const ZOOM_DURATION_MS = 400;
-const ZOOM_EASE = 'Cubic.easeIn';
 
 /**
  * Port of score_stage_scene.coffee + base_scene.coffee: the solo score mode.
@@ -139,22 +133,18 @@ export class ScoreStage extends Scene {
   // ------------------------------------------------------------- camera --
 
   private applyBaseCamera(): void {
-    const layout: Layout = computeLayout(this.scale.width, this.scale.height);
-    applyPlayCamera(this, layout);
-    this.baseZoom = layout.zoom > 0 ? layout.zoom : 1;
+    this.baseZoom = applyBaseCameraToScene(this);
   }
 
   /**
    * base_scene.coffee#zoom_lamb repositions and rescales an anchor-pointed
    * `elements` node around the tapped lamb -- pure Cocos anchor-point
    * trickery with no Phaser equivalent (Phaser containers have no anchor
-   * concept at all; see objects/lambMath.ts's header). A camera pan+zoom is
-   * the natural, idiomatic Phaser way to "focus" a point in the world, so
-   * this is a deliberate reimplementation of the *mechanism* -- matching the
-   * original's feel (0.4s, ease-in, zooming in more the smaller/further-away
-   * the losing lamb was) rather than its literal node math.
+   * concept at all; see objects/lambMath.ts's header). The actual pan+zoom
+   * mechanism now lives in stage/cameraZoom.ts (shared with PvpStage's own
+   * end-of-match zoom); see its header for the rest of the derivation.
    *
-   * Only the camera's zoom and scroll move here -- never its viewport --
+   * Only the camera's zoom and scroll move there -- never its viewport --
    * so applyPlayCamera()'s ownership of the viewport is untouched. The
    * zoom/scroll it *did* set get overwritten by this tween, but every
    * fresh entry into this scene calls applyBaseCamera() again before
@@ -162,29 +152,7 @@ export class ScoreStage extends Scene {
    * that's the "restore on restart" half of the contract.
    */
   private zoomLamb(lamb: Lamb, onComplete: () => void): void {
-    const cam = this.cameras.main;
-
-    // lamb.width already encodes the lamb's own render scale (see
-    // Lamb.ts#_setScale: width = trunc(LAMB_BODY_WIDTH * scale)), so this
-    // recovers an approximation of that scale without Lamb needing to
-    // expose it directly.
-    const approxScale = Phaser.Math.Clamp(lamb.width / LAMB_BODY_WIDTH, 0.05, 1);
-    const zoomFactor = Phaser.Math.Clamp(1.6 + 4 * (1 - approxScale * 2), 1, 5.2);
-    const targetZoom = this.baseZoom * zoomFactor;
-    const targetY = lamb.y - lamb.height / 2;
-
-    let pending = 2;
-    const done = (): void => {
-      pending -= 1;
-      if (pending <= 0) onComplete();
-    };
-
-    cam.pan(lamb.x, targetY, ZOOM_DURATION_MS, ZOOM_EASE, false, (_cam, progress) => {
-      if (progress >= 1) done();
-    });
-    cam.zoomTo(targetZoom, ZOOM_DURATION_MS, ZOOM_EASE, false, (_cam, progress) => {
-      if (progress >= 1) done();
-    });
+    zoomOnLoss(this, this.baseZoom, lamb, onComplete);
   }
 
   // -------------------------------------------------------------- input --
@@ -192,50 +160,24 @@ export class ScoreStage extends Scene {
   /**
    * Port of event_listener.coffee: every touch, regardless of what (if
    * anything) it hit, plays the tap sound and draws an expanding tap
-   * circle -- and kicks off the music on the very first gesture of the
-   * session. Phaser dispatches this scene-level 'pointerdown' for any tap
-   * on the canvas regardless of camera viewport, so the play-band check
-   * below (a genuinely new concern -- legacy had one full-screen canvas,
-   * this build has a separate letterboxed Hud overlay outside the band on
-   * non-16:9 screens) keeps taps on the Hud's own strips from also
-   * triggering the play scene's tap sound/circle. The music-start check
-   * runs before that guard, since it should fire on ANY first tap.
+   * circle (stage/tapFeedback.ts, shared with PvpStage) -- and kicks off
+   * the music on the very first gesture of the session. Phaser dispatches
+   * this scene-level 'pointerdown' for any tap on the canvas regardless of
+   * camera viewport, so the play-band check below (a genuinely new concern
+   * -- legacy had one full-screen canvas, this build has a separate
+   * letterboxed Hud overlay outside the band on non-16:9 screens) keeps
+   * taps on the Hud's own strips from also triggering the play scene's tap
+   * sound/circle. The music-start check runs before that guard, since it
+   * should fire on ANY first tap.
    */
   private handlePointerDown(pointer: Phaser.Input.Pointer): void {
     startMusicOnce(this, AudioKeys.Music);
 
-    if (!this.isWithinPlayViewport(pointer)) return;
+    if (!isWithinPlayViewport(this, pointer)) return;
 
     this.sound.play(AudioKeys.Tap);
     const world = this.cameras.main.getWorldPoint(pointer.x, pointer.y);
-    this.renderTapCircle(world.x, world.y);
-  }
-
-  private isWithinPlayViewport(pointer: Phaser.Input.Pointer): boolean {
-    const cam = this.cameras.main;
-    return (
-      pointer.x >= cam.x &&
-      pointer.x <= cam.x + cam.width &&
-      pointer.y >= cam.y &&
-      pointer.y <= cam.y + cam.height
-    );
-  }
-
-  private renderTapCircle(x: number, y: number): void {
-    const circle = this.add.sprite(x, y, AtlasKeys.Lamb, LambFrames.TapCircle);
-    circle.setOrigin(0.5, 0.5);
-    circle.setAlpha(0);
-    circle.setScale(TAP_CIRCLE_START_SCALE);
-    circle.setDepth(TAP_CIRCLE_DEPTH);
-
-    this.tweens.chain({
-      targets: circle,
-      tweens: [
-        { scale: 0.8, alpha: 1, duration: TAP_CIRCLE_PHASE_MS, ease: 'Linear' },
-        { scale: 1.2, alpha: 0, duration: TAP_CIRCLE_PHASE_MS, ease: 'Linear' },
-      ],
-      onComplete: () => circle.destroy(),
-    });
+    renderTapCircle(this, world.x, world.y, TAP_CIRCLE_DEPTH);
   }
 
   // ---------------------------------------------------------------- ui --

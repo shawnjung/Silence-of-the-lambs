@@ -30,8 +30,6 @@ const TAIL_FADE_MS = 1000;
 const BUTTON_PRESS_SCALE = 0.94;
 const BUTTON_PRESS_MS = 60;
 
-const COMING_SOON_MS = 1600;
-
 /**
  * Port of landing_scene.coffee: the game's title screen. Fades in the
  * background/title/menu over ~4.1s (skippable with any tap), then offers
@@ -44,9 +42,6 @@ export class MainMenu extends Scene {
 
   /** Reddit t2_ id once `/api/init` resolves, or null while logged out/unknown. PvP requires a real id to match on. */
   private userId: string | null = null;
-
-  private pvpToast: Phaser.GameObjects.Text | null = null;
-  private pvpToastTimer: ReturnType<typeof setTimeout> | null = null;
 
   private readonly onScaleResize = (): void => this.applyLayout();
   private readonly onPointerDown = (): void => {
@@ -62,8 +57,6 @@ export class MainMenu extends Scene {
     this.introTweens = [];
     this.introSkipped = false;
     this.userId = null;
-    this.pvpToast = null;
-    this.pvpToastTimer = null;
 
     this.applyLayout();
     this.scale.on(Phaser.Scale.Events.RESIZE, this.onScaleResize);
@@ -83,10 +76,6 @@ export class MainMenu extends Scene {
   private handleShutdown(): void {
     this.scale.off(Phaser.Scale.Events.RESIZE, this.onScaleResize);
     this.input.off('pointerdown', this.onPointerDown);
-    if (this.pvpToastTimer) {
-      clearTimeout(this.pvpToastTimer);
-      this.pvpToastTimer = null;
-    }
   }
 
   private applyLayout(): void {
@@ -143,8 +132,9 @@ export class MainMenu extends Scene {
 
   /**
    * _render_menus: both buttons sit at cocos y=70 (default anchor (0, 0) ->
-   * Phaser origin (0, 1)). Score starts the (already-ported) ScoreStage;
-   * PvP is gated on login and on PvpLanding actually existing yet.
+   * Phaser origin (0, 1)). Score starts ScoreStage; PvP starts PvpLanding,
+   * gated on login (`showLoginPrompt()` otherwise -- PvP needs a real
+   * userId to match on, unlike solo play).
    */
   private renderMenus(): void {
     const y = flipY(70);
@@ -302,37 +292,6 @@ export class MainMenu extends Scene {
       return;
     }
 
-    // TODO: drop this existence guard once PvpLanding is registered in game.ts.
-    const pvpLanding = this.scene.get('PvpLanding');
-    if (pvpLanding) {
-      this.scene.start('PvpLanding');
-    } else {
-      this.showComingSoon();
-    }
-  }
-
-  private showComingSoon(): void {
-    if (this.pvpToastTimer) {
-      clearTimeout(this.pvpToastTimer);
-      this.pvpToastTimer = null;
-    }
-    this.pvpToast?.destroy();
-
-    this.pvpToast = this.add
-      .text(WORLD_WIDTH / 2, flipY(70) - 70, 'PvP coming soon!', {
-        fontFamily: FONT_STACK,
-        fontSize: '18px',
-        color: '#f5f7fa',
-        fontStyle: '700',
-        backgroundColor: '#0c1220',
-        padding: { x: 12, y: 8 },
-      })
-      .setOrigin(0.5);
-
-    this.pvpToastTimer = setTimeout(() => {
-      this.pvpToast?.destroy();
-      this.pvpToast = null;
-      this.pvpToastTimer = null;
-    }, COMING_SOON_MS);
+    this.scene.start('PvpLanding');
   }
 }

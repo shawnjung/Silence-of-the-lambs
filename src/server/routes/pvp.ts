@@ -86,9 +86,12 @@ pvp.post('/ping', async (c) => {
 pvp.post('/leave', async (c) => {
   try {
     const userId = requireUserId();
+    const postId = requirePostId();
     const body = (await c.req.json().catch(() => ({}))) as Partial<PvpLeaveRequest>;
-    const matchId = requireStringField(body, 'matchId');
-    const result = await leave(matchId, userId);
+    // Optional on purpose — a player still parked in the queue has no match
+    // to leave but must still vacate the queue.
+    const matchId = typeof body.matchId === 'string' && body.matchId ? body.matchId : undefined;
+    const result = await leave(postId, userId, matchId);
     return c.json<PvpLeaveResponse>(result);
   } catch (error) {
     return handlePvpError(c, error);
