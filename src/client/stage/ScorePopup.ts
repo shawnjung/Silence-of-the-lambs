@@ -1,4 +1,4 @@
-import type { Scene } from 'phaser';
+import type { GameObjects, Scene } from 'phaser';
 import { BitmapFontKeys } from '../core/assets';
 
 const RISE_DISTANCE = 80;
@@ -28,6 +28,11 @@ function scaleForScore(score: number): number {
  * then destroys itself, exactly mirroring numbers_node.coffee's two
  * `moveBy(0, 80)` legs (cocos +y-up "up" == Phaser -y, already folded into
  * the tween targets below).
+ *
+ * Returns the created BitmapText so callers running a second, unzoomed UI
+ * camera over the same scene (see `stage/cameraZoom.ts`'s header) can
+ * exclude it from that camera -- a score popup is world content, not
+ * overlay.
  */
 export function showScorePopup(
   scene: Scene,
@@ -35,7 +40,7 @@ export function showScorePopup(
   y: number,
   score: number,
   depth: number
-): void {
+): GameObjects.BitmapText {
   const text = scene.add.bitmapText(x, y, BitmapFontKeys.Numbers, String(score));
   text.setOrigin(0.5, 1);
   text.setScale(scaleForScore(score));
@@ -50,4 +55,6 @@ export function showScorePopup(
     ],
     onComplete: () => text.destroy(),
   });
+
+  return text;
 }

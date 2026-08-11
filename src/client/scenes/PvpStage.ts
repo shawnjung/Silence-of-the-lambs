@@ -16,7 +16,7 @@ import {
   LambFrames,
 } from '../core/assets';
 import { applyMuteState, isMuted, playEffect, startMusicOnce, toggleMuted } from '../core/audio';
-import { applyBaseCameraToScene } from '../core/layout';
+import { applyLayoutToCamera, applyPlayCamera, computeLayout } from '../core/layout';
 import { pvpApi } from '../core/pvpApi';
 import { subscribePvpMatch, type Unsubscribe } from '../core/realtime';
 import { Lamb, type LambStage } from '../objects/Lamb';
@@ -63,8 +63,9 @@ type PvpLambEntry = {
 /**
  * Port of `pvp_stage_scene.coffee`: the 1v1 match itself. Mirrors
  * `ScoreStage`'s structure closely (camera handling, resize/shutdown wiring,
- * tap feedback, the play-band gate, Hud integration) -- see that scene's own
- * comments for the parts that are identical rather than PvP-specific.
+ * tap feedback, the play-band gate, Hud integration, the two-camera
+ * game-over overlay) -- see that scene's own comments for the parts that
+ * are identical rather than PvP-specific.
  *
  * The one thing genuinely new here: nothing about a lamb's patience gauge is
  * ever driven by a local timer. Every gauge is scheduled from the server's
@@ -85,17 +86,24 @@ export class PvpStage extends Scene {
   private lineCounts: LambLineCounts = freshLineCounts();
   private matchOver = false;
   private baseZoom = 1;
+  private created = false;
+  /** Resolved by `applyCameras` from `core/layout.ts`'s `computeLayout` -- see ScoreStage's own header comment on the same field. */
+  private worldWidth = WORLD_WIDTH;
+
+  /** The unzoomed second camera the match-over overlay renders through -- see ScoreStage's own header comment. Recreated fresh on every scene entry, never carried over from a previous match. */
+  private uiCamera: Phaser.Cameras.Scene2D.Camera | null = null;
 
   private hud!: Hud;
   private unsubscribeMatch: Unsubscribe | null = null;
   private heartbeatTimer: Phaser.Time.TimerEvent | null = null;
   private cleanedUp = false;
 
+  private grassImage!: Phaser.GameObjects.Image;
   private wonBanner!: Phaser.GameObjects.Sprite;
   private lostBanner!: Phaser.GameObjects.Sprite;
   private rematchButton!: Phaser.GameObjects.Sprite;
 
-  private readonly onScaleResize = (): void => this.applyBaseCamera();
+  private readonly onScaleResize = (): void => this.applyCameras();
 
   constructor() {
     super('PvpStage');
@@ -118,11 +126,13 @@ export class PvpStage extends Scene {
     this.unsubscribeMatch = null;
     this.heartbeatTimer = null;
     this.cleanedUp = false;
+    this.created = false;
+    this.uiCamera = null;
   }
 
   create(): void {
     applyMuteState(this);
-    this.applyBaseCamera();
+    this.applyCameras();
 
     this.scale.on(Phaser.Scale.Events.RESIZE, this.onScaleResize);
     this.events.once(Phaser.Scenes.Events.SHUTDOWN, this.handleShutdown, this);
@@ -142,6 +152,8 @@ export class PvpStage extends Scene {
     this.hud.setMuted(isMuted());
     this.hud.onBack(() => this.handleBack());
     this.hud.onMuteToggle(() => this.handleMuteToggle());
+
+    this.created = true;
 
     for (const serverLamb of this.initialLambs) {
       this.spawnLamb(serverLamb);
@@ -180,6 +192,12 @@ export class PvpStage extends Scene {
   private handleShutdown(): void {
     this.scale.off(Phaser.Scale.Events.RESIZE, this.onScaleResize);
     this.input.off('pointerdown', this.handlePointerDown, this);
+    this.created = false;
+    // Phaser's own CameraManager destroys every camera (main + this one) on
+    // scene shutdown and rebuilds a fresh main on the next entry -- nulling
+    // the reference here just keeps this field from ever pointing at a
+    // camera that object is done with.
+    this.uiCamera = null;
 
     if (this.cleanedUp) return;
     this.cleanedUp = true;
@@ -204,8 +222,36 @@ export class PvpStage extends Scene {
 
   // ------------------------------------------------------------- camera --
 
-  private applyBaseCamera(): void {
-    this.baseZoom = applyBaseCameraToScene(this);
+  /**
+   * Resolves this scene's adaptive world width for the current canvas size
+   * and applies the resulting letterboxed layout to both cameras -- see
+   * ScoreStage#applyCameras's own comment for the full rationale (shared
+   * verbatim by both scenes, only the set of worldWidth-dependent content it
+   * repositions differs: `won`/`lost`/rematch here instead of `lost`/
+   * restart).
+   */
+  private applyCameras(): void {
+    const layout = computeLayout(this.scale.width, this.scale.height);
+    this.worldWidth = layout.worldWidth;
+    this.baseZoom = layout.zoom > 0 ? layout.zoom : 1;
+
+    applyPlayCamera(this, layout);
+
+    if (!this.uiCamera) {
+      this.uiCamera = this.cameras.add(0, 0, this.scale.width, this.scale.height);
+    }
+    applyLayoutToCamera(this.uiCamera, layout);
+
+    this.lambStage.size.width = this.worldWidth;
+
+    if (!this.created) return;
+
+    this.grassImage.setX(this.worldWidth / 2);
+    this.wonBanner.setScale(this.worldWidth / WORLD_WIDTH);
+    this.lostBanner.setScale(this.worldWidth / WORLD_WIDTH);
+    this.rematchButton.setX(this.worldWidth / 2);
+
+    for (const entry of this.lambs.values()) entry.lamb.rebound(this.worldWidth);
   }
 
   // -------------------------------------------------------------- input --
@@ -217,35 +263,42 @@ export class PvpStage extends Scene {
 
     playEffect(this, AudioKeys.Tap);
     const world = this.cameras.main.getWorldPoint(pointer.x, pointer.y);
-    renderTapCircle(this, world.x, world.y, TAP_CIRCLE_DEPTH);
+    const circle = renderTapCircle(this, world.x, world.y, TAP_CIRCLE_DEPTH);
+    this.uiCamera?.ignore(circle);
   }
 
   // ---------------------------------------------------------------- ui --
 
   private renderBackground(): void {
-    const grass = this.add.image(WORLD_WIDTH / 2, WORLD_HEIGHT / 2, ImageKeys.Grass);
-    grass.setDepth(-1000);
+    this.grassImage = this.add.image(this.worldWidth / 2, WORLD_HEIGHT / 2, ImageKeys.Grass);
+    this.grassImage.setDepth(-1000);
+    this.uiCamera?.ignore(this.grassImage);
   }
 
+  /** Won/lost banners + rematch button, rendered through `uiCamera` only -- see this class's header comment. */
   private renderOverlays(): void {
     this.wonBanner = this.add.sprite(0, flipY(240), AtlasKeys.EndingMessages, EndingMessageFrames.Won);
     this.wonBanner.setOrigin(0, 1);
+    this.wonBanner.setScale(this.worldWidth / WORLD_WIDTH);
     this.wonBanner.setDepth(OVERLAY_DEPTH);
     this.wonBanner.setAlpha(0);
     this.wonBanner.setVisible(false);
 
     this.lostBanner = this.add.sprite(0, flipY(240), AtlasKeys.EndingMessages, EndingMessageFrames.Lost);
     this.lostBanner.setOrigin(0, 1);
+    this.lostBanner.setScale(this.worldWidth / WORLD_WIDTH);
     this.lostBanner.setDepth(OVERLAY_DEPTH);
     this.lostBanner.setAlpha(0);
     this.lostBanner.setVisible(false);
 
-    this.rematchButton = this.add.sprite(WORLD_WIDTH / 2, flipY(60), AtlasKeys.Lamb, LambFrames.BtnRestart);
+    this.rematchButton = this.add.sprite(this.worldWidth / 2, flipY(60), AtlasKeys.Lamb, LambFrames.BtnRestart);
     this.rematchButton.setOrigin(0.5, 1);
     this.rematchButton.setDepth(OVERLAY_DEPTH);
     this.rematchButton.setAlpha(0);
     this.rematchButton.setVisible(false);
     this.rematchButton.on('pointerdown', guard('PvpStage rematch', () => this.handleRematch()));
+
+    this.cameras.main.ignore([this.wonBanner, this.lostBanner, this.rematchButton]);
   }
 
   private showEndingBanner(outcome: PvpOutcome): void {
@@ -299,7 +352,7 @@ export class PvpStage extends Scene {
     const pos = computeLambSpawnPosition(
       serverLamb.line,
       this.lineCounts,
-      WORLD_WIDTH,
+      this.worldWidth,
       serverLamb.x,
       WORLD_HEIGHT
     );
@@ -331,8 +384,9 @@ export class PvpStage extends Scene {
 
     this.time.delayedCall(serverLamb.delay * 1000, () => {
       this.add.existing(lamb);
+      this.uiCamera?.ignore(lamb);
       lamb.dive(() => {
-        lamb.moveAround(0, WORLD_WIDTH);
+        lamb.moveAround(0, this.worldWidth);
         this.applyDeadline(entry, serverLamb.deadline, serverLamb.patience);
       });
     });

@@ -1,4 +1,4 @@
-import type { Scene } from 'phaser';
+import type { GameObjects, Scene } from 'phaser';
 import { AtlasKeys, LambFrames } from '../core/assets';
 
 const TAP_CIRCLE_START_SCALE = 0.4;
@@ -9,8 +9,17 @@ const TAP_CIRCLE_PHASE_MS = 100;
  * band" feedback -- an expanding/fading circle at the tap point. Shared by
  * `ScoreStage` and `PvpStage`; unrelated to a lamb's own `pointerdown`
  * (`objects/Lamb.ts` wires that separately).
+ *
+ * Returns the created sprite so callers running a second, unzoomed UI camera
+ * over the same scene (see `stage/cameraZoom.ts`'s header) can exclude it
+ * from that camera -- a tap circle is world content, not overlay.
  */
-export function renderTapCircle(scene: Scene, x: number, y: number, depth: number): void {
+export function renderTapCircle(
+  scene: Scene,
+  x: number,
+  y: number,
+  depth: number
+): GameObjects.Sprite {
   const circle = scene.add.sprite(x, y, AtlasKeys.Lamb, LambFrames.TapCircle);
   circle.setOrigin(0.5, 0.5);
   circle.setAlpha(0);
@@ -25,6 +34,8 @@ export function renderTapCircle(scene: Scene, x: number, y: number, depth: numbe
     ],
     onComplete: () => circle.destroy(),
   });
+
+  return circle;
 }
 
 /**

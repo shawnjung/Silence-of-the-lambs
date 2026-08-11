@@ -160,6 +160,33 @@ export class Lamb extends GameObjects.Container {
     this.startedAt = Date.now();
   }
 
+  /**
+   * Not a legacy concept -- legacy's stage width never changed underneath a
+   * live round. Now that `core/layout.ts` resolves an adaptive `worldWidth`
+   * that can shrink or grow on resize (rotating a phone mid-round), this
+   * recomputes this lamb's horizontal clamp (`minimum`/`maximum`) for the
+   * new `stageWidth`, snaps its own x back inside that range if it fell
+   * outside, and -- only if it's actively patrolling -- restarts its
+   * movement tweens toward the new bound from wherever it now is. A lamb
+   * that isn't patrolling (still diving, already stopped/dead) just gets
+   * its bounds refreshed for whenever it next calls `moveAround` itself.
+   */
+  rebound(stageWidth: number): void {
+    const clamped = clampLambX(this.x, stageWidth, this.width);
+    this.minimum = clamped.minimum;
+    this.maximum = clamped.maximum;
+    this.x = clamped.x;
+
+    if (!this.moving) return;
+
+    this.introTween?.stop();
+    this.loopTween?.stop();
+    this.introTween = null;
+    this.loopTween = null;
+    this.moving = false;
+    this.moveAround(0, stageWidth);
+  }
+
   /** LambController#reset: refreshes patience and restarts the gauge (used to recycle a lamb between rounds). */
   reset(patience: number): void {
     this.startedAt = Date.now();

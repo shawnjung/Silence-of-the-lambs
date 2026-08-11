@@ -10,7 +10,7 @@ import {
 } from '../core/assets';
 import { applyMuteState, isMuted, playEffect, startMusicOnce, toggleMuted } from '../core/audio';
 import { api } from '../core/api';
-import { applyBaseCameraToScene } from '../core/layout';
+import { applyLayoutToCamera, applyPlayCamera, computeLayout } from '../core/layout';
 import { Lamb, type LambStage } from '../objects/Lamb';
 import { GAUGE_WIDTH, flipY, localBodyPosition } from '../objects/lambMath';
 import { zoomOnLoss } from '../stage/cameraZoom';
@@ -57,14 +57,27 @@ const OVERLAY_FADE_DURATION_MS = 400;
  * score, and end the round the moment any lamb's patience gauge fills.
  *
  * Deliberately does not read device/canvas size anywhere except inside
- * applyBaseCamera() (via computeLayout(this.scale.width, this.scale.height))
- * -- everything else works in fixed 1136x640 world coordinates.
+ * applyCameras() (via computeLayout(this.scale.width, this.scale.height))
+ * -- everything else works in world coordinates (0, 0)-(worldWidth, 640),
+ * where worldWidth is `core/layout.ts`'s adaptive resolved width (640..1136,
+ * only 640 always native), not a fixed constant. See `applyCameras`'s own
+ * comment for why, and `Lamb#rebound` for how a live round survives
+ * worldWidth changing underneath it on resize.
+ *
+ * Runs two cameras over the same letterboxed band: `cameras.main` (world
+ * content -- background, lambs, tap feedback, score popups) and a second,
+ * unzoomed `uiCamera` (the restart button + "lost" banner) that `zoomOnLoss`
+ * never touches, so the game-over overlay stays put at normal scale while
+ * the main camera pans/zooms in on the lamb that ended the round. See
+ * `stage/cameraZoom.ts`'s header for why only the main camera is allowed to
+ * move there.
  */
 export class ScoreStage extends Scene {
   private readonly lambStage: LambStage = { size: { width: WORLD_WIDTH } };
 
   private hadTutorial = false;
   private hud!: Hud;
+  private created = false;
 
   private lambs: Lamb[] = [];
   private lineCounts: LambLineCounts = freshLineCounts();
@@ -72,11 +85,17 @@ export class ScoreStage extends Scene {
   private scoreEarnedCount = 0;
   private gameOver = false;
   private baseZoom = 1;
+  /** Resolved by `applyCameras` from `core/layout.ts`'s `computeLayout` -- see this class's own header comment. */
+  private worldWidth = WORLD_WIDTH;
 
+  /** The unzoomed second camera the game-over overlay renders through -- see this class's own header comment. Recreated fresh on every scene entry (including a restart), never carried over from a previous round. */
+  private uiCamera: Phaser.Cameras.Scene2D.Camera | null = null;
+
+  private grassImage!: Phaser.GameObjects.Image;
   private restartButton!: Phaser.GameObjects.Sprite;
   private lostBanner!: Phaser.GameObjects.Sprite;
 
-  private readonly onScaleResize = (): void => this.applyBaseCamera();
+  private readonly onScaleResize = (): void => this.applyCameras();
 
   constructor() {
     super('ScoreStage');
@@ -89,16 +108,19 @@ export class ScoreStage extends Scene {
     this.currentScore = 0;
     this.scoreEarnedCount = 0;
     this.gameOver = false;
+    this.created = false;
+    this.uiCamera = null;
   }
 
   create(): void {
-    // Always reassert the letterboxed base camera on every entry (including
+    // Always reassert the letterboxed base cameras on every entry (including
     // a restart re-entering this same Scene instance) -- this is what
     // guarantees zoomLamb()'s temporary pan/zoom from a previous round never
-    // leaks into the next one, without needing any special teardown of its
+    // leaks into the next one, and that a stale `uiCamera` from a previous
+    // round is never reused, without needing any special teardown of its
     // own (see zoomLamb()'s comment for the rest of that story).
     applyMuteState(this);
-    this.applyBaseCamera();
+    this.applyCameras();
 
     this.scale.on(Phaser.Scale.Events.RESIZE, this.onScaleResize);
     this.events.once(Phaser.Scenes.Events.SHUTDOWN, this.handleShutdown, this);
@@ -118,6 +140,8 @@ export class ScoreStage extends Scene {
     this.hud.onBack(() => this.handleBack());
     this.hud.onMuteToggle(() => this.handleMuteToggle());
 
+    this.created = true;
+
     this.startTutorial(() => this.startScoreMode());
   }
 
@@ -132,12 +156,51 @@ export class ScoreStage extends Scene {
     // (this Scene instance is reused across restarts) -- drop whatever's
     // there so listeners never stack across rounds.
     this.events.off('score-earned');
+    this.created = false;
+    // Phaser's own CameraManager destroys every camera (main + this one) on
+    // scene shutdown and rebuilds a fresh main on the next entry -- nulling
+    // the reference here just keeps this field from ever pointing at a
+    // camera that object is done with.
+    this.uiCamera = null;
   }
 
   // ------------------------------------------------------------- camera --
 
-  private applyBaseCamera(): void {
-    this.baseZoom = applyBaseCameraToScene(this);
+  /**
+   * Resolves this scene's adaptive world width for the current canvas size
+   * and applies the resulting letterboxed layout to both cameras -- the
+   * main camera (world content) and a second, unzoomed `uiCamera` (the
+   * game-over overlay) added the first time this runs and reused (re-laid
+   * out, never recreated) on every subsequent resize.
+   *
+   * Also re-centers/rebounds everything already rendered that depends on
+   * worldWidth -- the grass background, the restart button, the lost
+   * banner's scale, every lamb's patrol bounds (`this.lambStage.size.width`
+   * for future spawns, `Lamb#rebound` for lambs already patrolling) -- but
+   * only once `create()` has finished its first pass (`this.created`),
+   * since none of that exists yet the very first time this runs.
+   */
+  private applyCameras(): void {
+    const layout = computeLayout(this.scale.width, this.scale.height);
+    this.worldWidth = layout.worldWidth;
+    this.baseZoom = layout.zoom > 0 ? layout.zoom : 1;
+
+    applyPlayCamera(this, layout);
+
+    if (!this.uiCamera) {
+      this.uiCamera = this.cameras.add(0, 0, this.scale.width, this.scale.height);
+    }
+    applyLayoutToCamera(this.uiCamera, layout);
+
+    this.lambStage.size.width = this.worldWidth;
+
+    if (!this.created) return;
+
+    this.grassImage.setX(this.worldWidth / 2);
+    this.restartButton.setX(this.worldWidth / 2);
+    this.lostBanner.setScale(this.worldWidth / WORLD_WIDTH);
+
+    for (const lamb of this.lambs) lamb.rebound(this.worldWidth);
   }
 
   /**
@@ -148,12 +211,13 @@ export class ScoreStage extends Scene {
    * mechanism now lives in stage/cameraZoom.ts (shared with PvpStage's own
    * end-of-match zoom); see its header for the rest of the derivation.
    *
-   * Only the camera's zoom and scroll move there -- never its viewport --
-   * so applyPlayCamera()'s ownership of the viewport is untouched. The
-   * zoom/scroll it *did* set get overwritten by this tween, but every
-   * fresh entry into this scene calls applyBaseCamera() again before
-   * anything else runs, which resets both back to the letterboxed base --
-   * that's the "restore on restart" half of the contract.
+   * Only the main camera's zoom and scroll move there -- never its viewport,
+   * and never the second `uiCamera` at all -- so applyCameras()'s ownership
+   * of both viewports is untouched. The zoom/scroll it *did* set get
+   * overwritten by this tween, but every fresh entry into this scene calls
+   * applyCameras() again before anything else runs, which resets both back
+   * to the letterboxed base -- that's the "restore on restart" half of the
+   * contract.
    */
   private zoomLamb(lamb: Lamb, onComplete: () => void): void {
     zoomOnLoss(this, this.baseZoom, lamb, onComplete);
@@ -181,22 +245,25 @@ export class ScoreStage extends Scene {
 
     playEffect(this, AudioKeys.Tap);
     const world = this.cameras.main.getWorldPoint(pointer.x, pointer.y);
-    renderTapCircle(this, world.x, world.y, TAP_CIRCLE_DEPTH);
+    const circle = renderTapCircle(this, world.x, world.y, TAP_CIRCLE_DEPTH);
+    this.uiCamera?.ignore(circle);
   }
 
   // ---------------------------------------------------------------- ui --
 
   private renderBackground(): void {
-    // grass.png is authored at exactly WORLD_WIDTH x WORLD_HEIGHT (1136x640)
-    // -- no scaling needed, only centering (background_node.coffee).
-    const grass = this.add.image(WORLD_WIDTH / 2, WORLD_HEIGHT / 2, ImageKeys.Grass);
-    grass.setDepth(-1000);
+    // grass.png is authored at exactly 1136x640 (the world's native max) --
+    // no scaling needed, only centering on the resolved worldWidth (a
+    // horizontal crop, never a gap, since worldWidth never exceeds 1136).
+    this.grassImage = this.add.image(this.worldWidth / 2, WORLD_HEIGHT / 2, ImageKeys.Grass);
+    this.grassImage.setDepth(-1000);
+    this.uiCamera?.ignore(this.grassImage);
   }
 
-  /** Restart button + "lost" banner (score_mode_labels_node.coffee, minus the score label and back button -- both now Hud's job). */
+  /** Restart button + "lost" banner (score_mode_labels_node.coffee, minus the score label and back button -- both now Hud's job). Rendered through `uiCamera` only -- see this class's header comment. */
   private renderOverlays(): void {
     this.restartButton = this.add.sprite(
-      WORLD_WIDTH / 2,
+      this.worldWidth / 2,
       flipY(60),
       AtlasKeys.Lamb,
       LambFrames.BtnRestart
@@ -207,11 +274,16 @@ export class ScoreStage extends Scene {
     this.restartButton.setVisible(false);
     this.restartButton.on('pointerdown', guard('ScoreStage restart', () => this.handleRestart()));
 
+    // ending-messages' "lost" frame is authored 1136px wide -- scaled down to
+    // exactly worldWidth so it fits without cropping on a narrower world.
     this.lostBanner = this.add.sprite(0, flipY(240), AtlasKeys.EndingMessages, EndingMessageFrames.Lost);
     this.lostBanner.setOrigin(0, 1);
+    this.lostBanner.setScale(this.worldWidth / WORLD_WIDTH);
     this.lostBanner.setDepth(OVERLAY_DEPTH);
     this.lostBanner.setAlpha(0);
     this.lostBanner.setVisible(false);
+
+    this.cameras.main.ignore([this.restartButton, this.lostBanner]);
   }
 
   private activateRestartButton(): void {
@@ -277,7 +349,8 @@ export class ScoreStage extends Scene {
     if (!lamb.active || lamb.startedAt === null) return;
 
     const outcome = earnScore(lamb.patience, lamb.startedAt, Date.now());
-    showScorePopup(this, lamb.x, lamb.y - lamb.height, outcome.popupValue, SCORE_POPUP_DEPTH);
+    const popup = showScorePopup(this, lamb.x, lamb.y - lamb.height, outcome.popupValue, SCORE_POPUP_DEPTH);
+    this.uiCamera?.ignore(popup);
     lamb.reset(samplePatience());
 
     if (outcome.awarded !== null) {
@@ -298,7 +371,7 @@ export class ScoreStage extends Scene {
   // -------------------------------------------------------------- lambs --
 
   private spawnLamb(attrs: LambSpawnAttributes): Lamb {
-    const pos = computeLambSpawnPosition(attrs.line, this.lineCounts, WORLD_WIDTH, attrs.x, WORLD_HEIGHT);
+    const pos = computeLambSpawnPosition(attrs.line, this.lineCounts, this.worldWidth, attrs.x, WORLD_HEIGHT);
 
     const lamb = new Lamb(this, {
       scale: pos.scale,
@@ -321,6 +394,7 @@ export class ScoreStage extends Scene {
     // stage rather than all popping in at once.
     this.time.delayedCall(attrs.delay * 1000, () => {
       this.add.existing(lamb);
+      this.uiCamera?.ignore(lamb);
       lamb.dive(() => lamb.start());
     });
 
@@ -376,7 +450,7 @@ export class ScoreStage extends Scene {
 
     const guideLamb = new Lamb(this, {
       scale: TUTORIAL_GUIDE_SCALE,
-      x: WORLD_WIDTH / 2,
+      x: this.worldWidth / 2,
       y: 120,
       patience: TUTORIAL_GUIDE_PATIENCE,
       direction: 'right',
@@ -400,6 +474,7 @@ export class ScoreStage extends Scene {
 
     this.time.delayedCall(TUTORIAL_DIVE_DELAY_MS, () => {
       this.add.existing(guideLamb);
+      this.uiCamera?.ignore(guideLamb);
       guideLamb.dive(() => {
         guideLamb.startedAt = Date.now();
         guideLamb.gauge.show();
@@ -408,8 +483,9 @@ export class ScoreStage extends Scene {
     });
 
     this.time.delayedCall(TUTORIAL_FINGER_DELAY_MS, () => {
-      finger.setPosition(WORLD_WIDTH / 2 + TUTORIAL_FINGER_X_OFFSET, flipY(220));
+      finger.setPosition(this.worldWidth / 2 + TUTORIAL_FINGER_X_OFFSET, flipY(220));
       this.add.existing(finger);
+      this.uiCamera?.ignore(finger);
       finger.start();
     });
 

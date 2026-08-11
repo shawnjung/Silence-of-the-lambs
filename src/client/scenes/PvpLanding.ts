@@ -28,7 +28,13 @@ export class PvpLanding extends Scene {
   private matchId: string | null = null;
   private unsubscribeLobby: Unsubscribe | null = null;
   private cleanedUp = false;
+  private created = false;
 
+  /** Resolved by `applyLayout` from `core/layout.ts`'s `computeLayout` -- see PvpStage's own header comment on why this is no longer the fixed WORLD_WIDTH constant. */
+  private worldWidth = WORLD_WIDTH;
+
+  private backgroundImage: Phaser.GameObjects.Image | undefined;
+  private titleSprite!: Phaser.GameObjects.Sprite;
   private statusText!: Phaser.GameObjects.Text;
   private retryButton!: Phaser.GameObjects.Sprite;
 
@@ -43,6 +49,8 @@ export class PvpLanding extends Scene {
     this.matchId = null;
     this.unsubscribeLobby = null;
     this.cleanedUp = false;
+    this.worldWidth = WORLD_WIDTH;
+    this.created = false;
 
     applyMuteState(this);
     this.applyLayout();
@@ -58,6 +66,8 @@ export class PvpLanding extends Scene {
     this.renderStatus();
     this.renderRetryButton();
     this.renderBackButton();
+
+    this.created = true;
 
     // Subscribed for the *entire* time this scene is up, not just once a
     // 'waiting' response comes back -- queue()'s own request and the lobby
@@ -82,11 +92,24 @@ export class PvpLanding extends Scene {
   }
 
   private applyLayout(): void {
-    applyBaseCameraToScene(this);
+    const { worldWidth } = applyBaseCameraToScene(this);
+    this.worldWidth = worldWidth;
+
+    if (this.created) this.relayoutContent();
+  }
+
+  /** Re-centers everything already rendered against the freshly-resolved `this.worldWidth` -- called on every resize once `create()` has finished its first pass. */
+  private relayoutContent(): void {
+    this.backgroundImage?.setX(this.worldWidth / 2);
+    this.titleSprite.setX(this.worldWidth / 2);
+    this.statusText.setX(this.worldWidth / 2);
+    this.statusText.setWordWrapWidth(this.worldWidth - 200);
+    this.retryButton.setX(this.worldWidth / 2);
   }
 
   private handleShutdown(): void {
     this.scale.off(Phaser.Scale.Events.RESIZE, this.onScaleResize);
+    this.created = false;
     this.cleanUp();
   }
 
@@ -114,35 +137,40 @@ export class PvpLanding extends Scene {
   // ---------------------------------------------------------------- ui --
 
   private renderBackground(): void {
-    this.add.image(WORLD_WIDTH / 2, WORLD_HEIGHT / 2, ImageKeys.PvpLandingBg);
+    this.backgroundImage = this.add.image(
+      this.worldWidth / 2,
+      WORLD_HEIGHT / 2,
+      ImageKeys.PvpLandingBg
+    );
   }
 
   private renderTitle(): void {
     const title = this.add.sprite(
-      WORLD_WIDTH / 2,
+      this.worldWidth / 2,
       flipY(490),
       AtlasKeys.PvpLanding,
       PvpLandingFrames.Title
     );
     title.setOrigin(0.5, flipOriginY(0));
+    this.titleSprite = title;
   }
 
   private renderStatus(): void {
     this.statusText = this.add
-      .text(WORLD_WIDTH / 2, flipY(280), '', {
+      .text(this.worldWidth / 2, flipY(280), '', {
         fontFamily: FONT_STACK,
         fontSize: '22px',
         color: '#f5f7fa',
         fontStyle: '600',
         align: 'center',
-        wordWrap: { width: WORLD_WIDTH - 200 },
+        wordWrap: { width: this.worldWidth - 200 },
       })
       .setOrigin(0.5, 0.5);
   }
 
   private renderRetryButton(): void {
     this.retryButton = this.add.sprite(
-      WORLD_WIDTH / 2,
+      this.worldWidth / 2,
       flipY(80),
       AtlasKeys.PvpLanding,
       PvpLandingFrames.BtnStart
