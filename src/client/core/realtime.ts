@@ -1,4 +1,5 @@
-import { connectRealtime, context, disconnectRealtime } from '@devvit/web/client';
+import { connectRealtime, disconnectRealtime } from '@devvit/web/client';
+import { getUserId } from './devvitContext';
 import type { PvpLobbyMessage, PvpMatchMessage } from '../../shared/pvp';
 import { pvpLobbyChannel, pvpMatchChannel } from '../../shared/pvp';
 import { isOwnMessage } from './realtimeFilter';
@@ -32,7 +33,7 @@ function subscribe<Msg extends { userId: string }>(
     channel,
     onMessage: (msg) => {
       if (!live) return;
-      if (!includeOwn && isOwnMessage(msg.userId, context.userId)) return;
+      if (!includeOwn && isOwnMessage(msg.userId, getUserId() ?? undefined)) return;
       onMessage(msg);
     },
   });

@@ -240,17 +240,28 @@ export class MainMenu extends Scene {
       fontStyle: '600',
     };
 
-    const bestX = WORLD_WIDTH / 2 - 90;
-    const topX = WORLD_WIDTH / 2 + 90;
+    // The landing art is a big near-white lamb face filling the middle of the
+    // band, so pale text over it is invisible and a centred panel covers the
+    // lamb's eyes. The band's top corners are the only genuinely empty space:
+    // one small dark pill in each, clear of the face either side.
+    const PILL_WIDTH = 190;
+    const PILL_HEIGHT = 58;
+    const bestX = 24 + PILL_WIDTH / 2;
+    const topX = WORLD_WIDTH - 24 - PILL_WIDTH / 2;
 
-    this.add.text(bestX, 16, 'YOUR BEST', labelStyle).setOrigin(0.5, 0);
-    this.add.text(topX, 16, 'TOP SCORE', labelStyle).setOrigin(0.5, 0);
+    const pill = this.add.graphics().fillStyle(0x0b1707, 0.6);
+    for (const cx of [bestX, topX]) {
+      pill.fillRoundedRect(cx - PILL_WIDTH / 2, 12, PILL_WIDTH, PILL_HEIGHT, 12);
+    }
+
+    this.add.text(bestX, 20, 'YOUR BEST', labelStyle).setOrigin(0.5, 0);
+    this.add.text(topX, 20, 'TOP SCORE', labelStyle).setOrigin(0.5, 0);
 
     const bestValue = this.add
-      .bitmapText(bestX, 34, BitmapFontKeys.Numbers, '0', 24)
+      .bitmapText(bestX, 36, BitmapFontKeys.Numbers, '0', 26)
       .setOrigin(0.5, 0);
     const topValue = this.add
-      .bitmapText(topX, 34, BitmapFontKeys.Numbers, '0', 24)
+      .bitmapText(topX, 36, BitmapFontKeys.Numbers, '0', 26)
       .setOrigin(0.5, 0);
 
     void api

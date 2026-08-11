@@ -45,13 +45,41 @@ export function toggleMuted(scene: Scene): boolean {
 }
 
 /**
+ * True when the key actually made it into the audio cache.
+ *
+ * This matters more than it looks: `sound.add()` THROWS on a missing key, and
+ * every one of these calls sits inside a pointerdown handler. A silent asset
+ * failure used to escape the handler and take down the whole game loop -- the
+ * game froze on the first tap of the title screen, the tutorial lamb, or the
+ * PvP button. Audio is decoration; it must never be able to do that.
+ */
+function isLoaded(scene: Scene, key: string): boolean {
+  return scene.cache.audio.exists(key);
+}
+
+/** Fire-and-forget sound effect. Never throws, never warns twice. */
+export function playEffect(scene: Scene, key: string): void {
+  if (!isLoaded(scene, key)) return;
+  try {
+    scene.sound.play(key);
+  } catch {
+    // A decode that failed after loading, or a suspended context. Not fatal.
+  }
+}
+
+/**
  * Call from the first pointerdown of the session. Safe to call repeatedly.
  */
 export function startMusicOnce(scene: Scene, key: string): void {
   if (musicStarted) return;
   musicStarted = true;
   scene.sound.mute = muted;
-  scene.sound.add(key, { loop: true, volume: 0.5 }).play();
+  if (!isLoaded(scene, key)) return;
+  try {
+    scene.sound.add(key, { loop: true, volume: 0.5 }).play();
+  } catch {
+    // Play silently rather than not at all.
+  }
 }
 
 /** Applies the persisted mute state to a freshly created scene's sound manager. */

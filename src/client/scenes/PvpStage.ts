@@ -1,6 +1,6 @@
 import * as Phaser from 'phaser';
 import { Scene } from 'phaser';
-import { context } from '@devvit/web/client';
+import { getUserId } from '../core/devvitContext';
 import { WORLD_HEIGHT, WORLD_WIDTH } from '../../shared/api';
 import type {
   PvpLamb,
@@ -15,7 +15,7 @@ import {
   ImageKeys,
   LambFrames,
 } from '../core/assets';
-import { applyMuteState, isMuted, startMusicOnce, toggleMuted } from '../core/audio';
+import { applyMuteState, isMuted, playEffect, startMusicOnce, toggleMuted } from '../core/audio';
 import { applyBaseCameraToScene } from '../core/layout';
 import { pvpApi } from '../core/pvpApi';
 import { subscribePvpMatch, type Unsubscribe } from '../core/realtime';
@@ -102,11 +102,11 @@ export class PvpStage extends Scene {
 
   init(data: PvpStageInitData): void {
     this.matchId = data.match.matchId;
-    // MainMenu only ever lets a logged-in viewer reach PvP (see MainMenu's
-    // own userId gate before it starts PvpLanding), and every PvP REST call
-    // besides is itself userId-gated server-side -- context.userId is safe
-    // to treat as non-null for the lifetime of this scene.
-    this.selfUserId = context.userId as string;
+    // MainMenu only lets a logged-in viewer reach PvP and every PvP REST call
+    // is userId-gated server-side, so this is normally non-null. Falling back
+    // to '' rather than asserting keeps a missing host context from throwing
+    // out of init() -- the server rejects the empty id cleanly instead.
+    this.selfUserId = getUserId() ?? '';
     this.opponentId =
       data.match.players.find((id) => id !== this.selfUserId) ?? data.match.players[0];
     this.initialLambs = data.match.lambs;
@@ -211,7 +211,7 @@ export class PvpStage extends Scene {
 
     if (!isWithinPlayViewport(this, pointer)) return;
 
-    this.sound.play(AudioKeys.Tap);
+    playEffect(this, AudioKeys.Tap);
     const world = this.cameras.main.getWorldPoint(pointer.x, pointer.y);
     renderTapCircle(this, world.x, world.y, TAP_CIRCLE_DEPTH);
   }

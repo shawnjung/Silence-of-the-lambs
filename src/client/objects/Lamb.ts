@@ -1,6 +1,7 @@
 import { GameObjects, Geom } from 'phaser';
 import type { Scene, Tweens, Types } from 'phaser';
 import { AtlasKeys, LambFrames } from '../core/assets';
+import { localHitRect } from '../core/hitArea';
 import { Gauge } from './Gauge';
 import {
   LAMB_BODY_HEIGHT,
@@ -140,8 +141,11 @@ export class Lamb extends GameObjects.Container {
 
     this.gauge.on('time-over', () => this.emit('time-over'));
 
+    // The rect must be in Phaser's displayOrigin-shifted space, not plain
+    // local space -- see core/hitArea.ts. Requires _setScale() to have run
+    // already, since displayOrigin derives from setSize().
     this.setInteractive(
-      new Geom.Rectangle(-this.width / 2, -this.height, this.width, this.height),
+      localHitRect(this, -this.width / 2, -this.height, this.width, this.height),
       Geom.Rectangle.Contains
     );
     this.on('pointerdown', () => this.emit('tapped'));
@@ -374,6 +378,9 @@ export class Lamb extends GameObjects.Container {
     if (this.speaking) return;
     this.speaking = true;
 
+    // sound.add throws on a missing key, and speak() runs from the losing
+    // path -- an undecodable asset must not turn a lost round into a crash.
+    if (!this.scene.cache.audio.exists(this.bleatSoundKey)) return;
     const sound = this.scene.sound.add(this.bleatSoundKey);
     sound.play();
     this.speakTimeout = setTimeout(() => {

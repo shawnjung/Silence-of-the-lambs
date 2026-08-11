@@ -8,7 +8,7 @@ import {
   ImageKeys,
   LambFrames,
 } from '../core/assets';
-import { applyMuteState, isMuted, startMusicOnce, toggleMuted } from '../core/audio';
+import { applyMuteState, isMuted, playEffect, startMusicOnce, toggleMuted } from '../core/audio';
 import { api } from '../core/api';
 import { applyBaseCameraToScene } from '../core/layout';
 import { Lamb, type LambStage } from '../objects/Lamb';
@@ -175,7 +175,7 @@ export class ScoreStage extends Scene {
 
     if (!isWithinPlayViewport(this, pointer)) return;
 
-    this.sound.play(AudioKeys.Tap);
+    playEffect(this, AudioKeys.Tap);
     const world = this.cameras.main.getWorldPoint(pointer.x, pointer.y);
     renderTapCircle(this, world.x, world.y, TAP_CIRCLE_DEPTH);
   }

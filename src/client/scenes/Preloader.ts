@@ -1,5 +1,6 @@
 import { Scene } from 'phaser';
 import { WORLD_HEIGHT, WORLD_WIDTH } from '../../shared/api';
+import { publishDecodedAudio, queueAudioBinaries } from '../core/audioDecode';
 import {
   AssetUrls,
   AtlasKeys,
@@ -12,6 +13,12 @@ import {
  * Draws the grass backdrop Boot already loaded plus a simple progress bar,
  * then loads everything else the game needs before handing off to MainMenu.
  */
+const AUDIO_ENTRIES = [
+  { key: AudioKeys.Music, url: AssetUrls[AudioKeys.Music] },
+  { key: AudioKeys.Effects, url: AssetUrls[AudioKeys.Effects] },
+  { key: AudioKeys.Tap, url: AssetUrls[AudioKeys.Tap] },
+] as const;
+
 export class Preloader extends Scene {
   constructor() {
     super('Preloader');
@@ -58,12 +65,17 @@ export class Preloader extends Scene {
 
     this.load.bitmapFont(BitmapFontKeys.Numbers, numbers.texture, numbers.xml);
 
-    this.load.audio(AudioKeys.Music, AssetUrls[AudioKeys.Music]);
-    this.load.audio(AudioKeys.Effects, AssetUrls[AudioKeys.Effects]);
-    this.load.audio(AudioKeys.Tap, AssetUrls[AudioKeys.Tap]);
+    // Not this.load.audio: Phaser's canPlayType probe rejects .m4a even where
+    // the browser decodes it fine. See core/audioDecode.ts.
+    queueAudioBinaries(this, AUDIO_ENTRIES);
   }
 
   create(): void {
+    // Deliberately not awaited: decoding is a few milliseconds of Web Audio
+    // work and the menu should not wait on it. Music only starts on the first
+    // tap, and every audio call site treats a missing key as "play nothing"
+    // (core/audio.ts), so arriving late is harmless.
+    void publishDecodedAudio(this, AUDIO_ENTRIES);
     this.scene.start('MainMenu');
   }
 }

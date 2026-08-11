@@ -1,5 +1,6 @@
 import * as Phaser from 'phaser';
 import { Scene } from 'phaser';
+import { localHitRect } from '../core/hitArea';
 import { computeLayout, type Layout, type Rect } from '../core/layout';
 
 export type OpponentInfo = { username: string; danger: number };
@@ -398,7 +399,7 @@ export class Hud extends Scene {
     icon.setOrigin(0.5, 0.5);
 
     bg.setInteractive({
-      hitArea: new Phaser.Geom.Rectangle(-half, -half, size, size),
+      hitArea: localHitRect(bg, -half, -half, size, size),
       hitAreaCallback: Phaser.Geom.Rectangle.Contains,
       useHandCursor: true,
     });

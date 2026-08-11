@@ -1,6 +1,6 @@
 import * as Phaser from 'phaser';
 import { Scene } from 'phaser';
-import { context } from '@devvit/web/client';
+import { getPostId } from '../core/devvitContext';
 import { WORLD_HEIGHT, WORLD_WIDTH } from '../../shared/api';
 import type { PvpMatch } from '../../shared/pvp';
 import { AtlasKeys, AudioKeys, ImageKeys, PvpLandingFrames } from '../core/assets';
@@ -65,7 +65,13 @@ export class PvpLanding extends Scene {
     // whoever's queue() call itself completes the pairing would process
     // their own 'matched' broadcast a second time, on top of the one they
     // already got directly from their POST response below.
-    const postId = context.postId;
+    const postId = getPostId();
+    if (!postId) {
+      // No host context means there is no lobby to join. Say so instead of
+      // throwing out of create() and taking the whole game down with it.
+      this.setStatus('PvP is unavailable here.', false);
+      return;
+    }
     this.unsubscribeLobby = subscribePvpLobby(postId, (msg) => this.enterMatch(msg.match));
 
     this.attemptQueue();
