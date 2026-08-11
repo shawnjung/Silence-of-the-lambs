@@ -1,6 +1,7 @@
 import * as Phaser from 'phaser';
 import { Scene } from 'phaser';
 import { localHitRect } from '../core/hitArea';
+import { guard } from '../core/safety';
 import { computeLayout, type Layout, type Rect } from '../core/layout';
 
 export type OpponentInfo = { username: string; danger: number };
@@ -405,7 +406,7 @@ export class Hud extends Scene {
     });
     bg.on('pointerover', () => redraw(true));
     bg.on('pointerout', () => redraw(false));
-    bg.on('pointerdown', () => onClick());
+    bg.on('pointerdown', guard('Hud button', () => onClick()));
 
     return { bg, icon, redraw };
   }

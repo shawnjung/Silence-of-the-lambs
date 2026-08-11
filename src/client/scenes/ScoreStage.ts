@@ -27,6 +27,7 @@ import {
 import { showScorePopup } from '../stage/ScorePopup';
 import { earnScore } from '../stage/scoring';
 import { isWithinPlayViewport, renderTapCircle } from '../stage/tapFeedback';
+import { guard } from '../core/safety';
 import { Hud } from './Hud';
 
 export type ScoreStageInitData = { hadTutorial?: boolean };
@@ -101,7 +102,10 @@ export class ScoreStage extends Scene {
 
     this.scale.on(Phaser.Scale.Events.RESIZE, this.onScaleResize);
     this.events.once(Phaser.Scenes.Events.SHUTDOWN, this.handleShutdown, this);
-    this.input.on('pointerdown', this.handlePointerDown, this);
+    this.input.on(
+      'pointerdown',
+      guard('ScoreStage pointerdown', (p: Phaser.Input.Pointer) => this.handlePointerDown(p))
+    );
 
     this.renderBackground();
     this.renderOverlays();
@@ -201,7 +205,7 @@ export class ScoreStage extends Scene {
     this.restartButton.setDepth(OVERLAY_DEPTH);
     this.restartButton.setAlpha(0);
     this.restartButton.setVisible(false);
-    this.restartButton.on('pointerdown', () => this.handleRestart());
+    this.restartButton.on('pointerdown', guard('ScoreStage restart', () => this.handleRestart()));
 
     this.lostBanner = this.add.sprite(0, flipY(240), AtlasKeys.EndingMessages, EndingMessageFrames.Lost);
     this.lostBanner.setOrigin(0, 1);
@@ -265,7 +269,7 @@ export class ScoreStage extends Scene {
   // ------------------------------------------------------------ scoring --
 
   private wireLambScoring(lamb: Lamb): void {
-    lamb.on('tapped', () => this.handleLambTapped(lamb));
+    lamb.on('tapped', guard('ScoreStage lamb tapped', () => this.handleLambTapped(lamb)));
   }
 
   /** Port of ScoreLambController#earn_score's side effects; the pure math itself lives in stage/scoring.ts. */
@@ -309,7 +313,7 @@ export class ScoreStage extends Scene {
     });
 
     this.wireLambScoring(lamb);
-    lamb.on('time-over', () => this.handleTimeOver(lamb));
+    lamb.on('time-over', guard('ScoreStage time-over', () => this.handleTimeOver(lamb)));
     this.lambs.push(lamb);
 
     // base_scene.coffee#render_lamb defers adding the lamb to the stage (and

@@ -13,6 +13,7 @@ import { api } from '../core/api';
 import { applyMuteState, startMusicOnce } from '../core/audio';
 import { applyPlayCamera, computeLayout } from '../core/layout';
 import { flipOriginY, flipY } from '../objects/lambMath';
+import { guard } from '../core/safety';
 
 const FONT_STACK =
   '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif';
@@ -44,10 +45,10 @@ export class MainMenu extends Scene {
   private userId: string | null = null;
 
   private readonly onScaleResize = (): void => this.applyLayout();
-  private readonly onPointerDown = (): void => {
+  private readonly onPointerDown = guard('MainMenu pointerdown', (): void => {
     startMusicOnce(this, AudioKeys.Music);
     this.skipIntro();
-  };
+  });
 
   constructor() {
     super('MainMenu');
@@ -177,8 +178,8 @@ export class MainMenu extends Scene {
       })
     );
 
-    this.bindButton(scoreButton, () => this.handleScoreButton());
-    this.bindButton(pvpButton, () => this.handlePvpButton());
+    this.bindButton(scoreButton, guard('MainMenu score button', () => this.handleScoreButton()));
+    this.bindButton(pvpButton, guard('MainMenu pvp button', () => this.handlePvpButton()));
   }
 
   /** _render_copyright: cocos (width/2-150, 20), default anchor (0, 0). */

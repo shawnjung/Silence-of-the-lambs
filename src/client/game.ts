@@ -8,6 +8,7 @@ import { ScoreStage } from './scenes/ScoreStage';
 import { PvpLanding } from './scenes/PvpLanding';
 import { PvpStage } from './scenes/PvpStage';
 import { Hud } from './scenes/Hud';
+import { installErrorOverlay } from './core/safety';
 
 const config: Phaser.Types.Core.GameConfig = {
   type: AUTO,
@@ -22,6 +23,8 @@ const config: Phaser.Types.Core.GameConfig = {
   },
   scene: [Boot, Preloader, MainMenu, ScoreStage, PvpLanding, PvpStage, Hud],
 };
+
+installErrorOverlay();
 
 document.addEventListener('DOMContentLoaded', () => {
   new Game(config);

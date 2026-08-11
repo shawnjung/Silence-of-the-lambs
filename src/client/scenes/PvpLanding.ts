@@ -10,6 +10,7 @@ import { PvpApiError, pvpApi } from '../core/pvpApi';
 import { subscribePvpLobby, type Unsubscribe } from '../core/realtime';
 import { flipOriginY, flipY } from '../objects/lambMath';
 import type { PvpStageInitData } from './PvpStage';
+import { guard } from '../core/safety';
 
 const FONT_STACK =
   '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif';
@@ -47,7 +48,10 @@ export class PvpLanding extends Scene {
     this.applyLayout();
     this.scale.on(Phaser.Scale.Events.RESIZE, this.onScaleResize);
     this.events.once(Phaser.Scenes.Events.SHUTDOWN, this.handleShutdown, this);
-    this.input.once('pointerdown', () => startMusicOnce(this, AudioKeys.Music));
+    this.input.once(
+      'pointerdown',
+      guard('PvpLanding pointerdown', () => startMusicOnce(this, AudioKeys.Music))
+    );
 
     this.renderBackground();
     this.renderTitle();
@@ -146,7 +150,7 @@ export class PvpLanding extends Scene {
     this.retryButton.setOrigin(0.5, flipOriginY(0));
     this.retryButton.setVisible(false);
     this.retryButton.setInteractive({ useHandCursor: true });
-    this.retryButton.on('pointerdown', () => this.attemptQueue());
+    this.retryButton.on('pointerdown', guard('PvpLanding retry', () => this.attemptQueue()));
   }
 
   private renderBackButton(): void {
@@ -161,7 +165,7 @@ export class PvpLanding extends Scene {
       })
       .setOrigin(0, 0);
     backButton.setInteractive({ useHandCursor: true });
-    backButton.on('pointerdown', () => this.handleBack());
+    backButton.on('pointerdown', guard('PvpLanding back', () => this.handleBack()));
   }
 
   private setStatus(message: string, showRetry: boolean): void {

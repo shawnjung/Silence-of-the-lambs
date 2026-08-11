@@ -36,6 +36,7 @@ import {
 } from '../stage/pvpMatch';
 import { isWithinPlayViewport, renderTapCircle } from '../stage/tapFeedback';
 import { Hud } from './Hud';
+import { guard } from '../core/safety';
 
 export type PvpStageInitData = { match: PvpMatch };
 
@@ -125,7 +126,10 @@ export class PvpStage extends Scene {
 
     this.scale.on(Phaser.Scale.Events.RESIZE, this.onScaleResize);
     this.events.once(Phaser.Scenes.Events.SHUTDOWN, this.handleShutdown, this);
-    this.input.on('pointerdown', this.handlePointerDown, this);
+    this.input.on(
+      'pointerdown',
+      guard('PvpStage pointerdown', (p: Phaser.Input.Pointer) => this.handlePointerDown(p))
+    );
 
     this.renderBackground();
     this.renderOverlays();
@@ -241,7 +245,7 @@ export class PvpStage extends Scene {
     this.rematchButton.setDepth(OVERLAY_DEPTH);
     this.rematchButton.setAlpha(0);
     this.rematchButton.setVisible(false);
-    this.rematchButton.on('pointerdown', () => this.handleRematch());
+    this.rematchButton.on('pointerdown', guard('PvpStage rematch', () => this.handleRematch()));
   }
 
   private showEndingBanner(outcome: PvpOutcome): void {
@@ -322,8 +326,8 @@ export class PvpStage extends Scene {
     };
     this.lambs.set(serverLamb.id, entry);
 
-    lamb.on('tapped', () => this.handleLambTapped(entry));
-    lamb.on('time-over', () => this.handleLambTimeOver(entry));
+    lamb.on('tapped', guard('PvpStage lamb tapped', () => this.handleLambTapped(entry)));
+    lamb.on('time-over', guard('PvpStage time-over', () => this.handleLambTimeOver(entry)));
 
     this.time.delayedCall(serverLamb.delay * 1000, () => {
       this.add.existing(lamb);
