@@ -10,7 +10,7 @@ import { PvpApiError, pvpApi } from '../core/pvpApi';
 import { subscribePvpLobby, type Unsubscribe } from '../core/realtime';
 import { flipOriginY, flipY } from '../objects/lambMath';
 import type { PvpStageInitData } from './PvpStage';
-import { guard } from '../core/safety';
+import { guard, reportError } from '../core/safety';
 
 const FONT_STACK =
   '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif';
@@ -86,7 +86,17 @@ export class PvpLanding extends Scene {
       this.setStatus('PvP is unavailable here.', false);
       return;
     }
-    this.unsubscribeLobby = subscribePvpLobby(postId, (msg) => this.enterMatch(msg.match));
+    // A throw here would escape create() and kill the game loop -- guard()
+    // only covers callbacks Phaser invokes later. Devvit's realtime connect
+    // validates the channel name synchronously and rejects anything outside
+    // [A-Za-z0-9_], which is exactly how PvP froze the whole game.
+    try {
+      this.unsubscribeLobby = subscribePvpLobby(postId, (msg) => this.enterMatch(msg.match));
+    } catch (error) {
+      reportError('PvpLanding realtime subscribe', error);
+      this.setStatus('Could not reach the PvP lobby.', true);
+      return;
+    }
 
     this.attemptQueue();
   }

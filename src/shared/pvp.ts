@@ -145,8 +145,28 @@ export type PvpMatchMessage =
 
 export type PvpRealtimeMessage = PvpLobbyMessage | PvpMatchMessage;
 
+/**
+ * Devvit rejects any realtime channel name containing something other than
+ * letters, numbers, and underscores:
+ *
+ *   Error: invalid channel name "pvp:lobby:t3_1vl1e11"; channels may only
+ *   contain letters, numbers, and underscores
+ *
+ * Colon-separated names (the obvious choice, and what Redis keys use here) are
+ * therefore illegal, as are the hyphens in a randomUUID match id. Everything
+ * outside the allowed set collapses to an underscore. The substitution is
+ * applied to the whole channel name rather than trusting callers, since the
+ * failure only shows up at connect time — inside a scene's create(), where a
+ * throw takes down the game loop.
+ */
+function channelName(...parts: readonly string[]): string {
+  return parts.join('_').replace(/[^A-Za-z0-9_]/g, '_');
+}
+
 /** The waiting-room channel for a post. Carries `PvpLobbyMessage`. */
-export const pvpLobbyChannel = (postId: string): string => `pvp:lobby:${postId}`;
+export const pvpLobbyChannel = (postId: string): string =>
+  channelName('pvp', 'lobby', postId);
 
 /** The in-match channel for a match. Carries `PvpMatchMessage`. */
-export const pvpMatchChannel = (matchId: string): string => `pvp:${matchId}`;
+export const pvpMatchChannel = (matchId: string): string =>
+  channelName('pvp', 'match', matchId);

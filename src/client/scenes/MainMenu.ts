@@ -240,6 +240,7 @@ export class MainMenu extends Scene {
         delay: SCORE_BTN_DELAY_MS,
         duration: TAIL_FADE_MS,
         ease: 'Linear',
+        onComplete: () => scoreButton.setInteractive({ useHandCursor: true }),
       })
     );
     this.introTweens.push(
@@ -249,6 +250,7 @@ export class MainMenu extends Scene {
         delay: PVP_BTN_DELAY_MS,
         duration: TAIL_FADE_MS,
         ease: 'Linear',
+        onComplete: () => pvpButton.setInteractive({ useHandCursor: true }),
       })
     );
 
@@ -385,8 +387,14 @@ export class MainMenu extends Scene {
 
   // -------------------------------------------------------------- input --
 
+  /**
+   * Binds the handler but leaves the sprite NON-interactive: its fade tween
+   * enables it on completion (see renderMenus). An invisible button that still
+   * accepts taps is how a tap "anywhere" during the intro fade launched PvP by
+   * accident -- alpha 0 does not stop Phaser hit-testing a sprite.
+   */
   private bindButton(sprite: Phaser.GameObjects.Sprite, onClick: () => void): void {
-    sprite.setInteractive({ useHandCursor: true });
+    sprite.disableInteractive();
     sprite.on('pointerdown', () => {
       this.tweens.add({
         targets: sprite,
